@@ -1,0 +1,35 @@
+{
+  "积极达峰2028": {
+    "model_type": "leap",
+    "gdp_growth_rate": 0.06,
+    "population_growth_rate": -0.0099,
+    "efficiency_improvement_rate": 0.013,
+    "coal_reduction_rate": 0.013,
+    "power_share_increase": 0.012,
+    "ren_share_increase": 0.012,
+    "grid_cf_decline": 0.025,
+    "trend_method": "linear_regression"
+  },
+  "基准达峰2030": {
+    "model_type": "leap",
+    "gdp_growth_rate": 0.055,
+    "population_growth_rate": -0.0099,
+    "efficiency_improvement_rate": 0.015,
+    "coal_reduction_rate": 0.015,
+    "power_share_increase": 0.015,
+    "ren_share_increase": 0.015,
+    "grid_cf_decline": 0.03,
+    "trend_method": "linear_regression"
+  },
+  "Kaya达峰2032": {
+    "model_type": "kaya",
+    "gdp_growth_rate": 0.05,
+    "population_growth_rate": -0.0099,
+    "efficiency_improvement_rate": 0.017,
+    "coal_reduction_rate": 0.017,
+    "power_share_increase": 0.017,
+    "ren_share_increase": 0.017,
+    "grid_cf_decline": 0.035,
+    "trend_method": "linear_regression"
+  }
+}
