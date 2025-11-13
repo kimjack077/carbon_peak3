@@ -17,7 +17,35 @@
           <p><strong>部门：</strong>{{ dataInfo.sectors.join('、') }}</p>
           <p><strong>数据条数：</strong>{{ dataInfo.rows }}</p>
           
-          <el-button type="primary" @click="useExampleData">重新加载示例数据</el-button>
+          <el-button type="primary" @click="useExampleData" style="margin-bottom: 20px;">重新加载示例数据</el-button>
+          
+          <!-- 原始数据表格 -->
+          <div v-if="tableData.length > 0" class="data-table">
+            <h3>原始数据</h3>
+            <el-table :data="tableData" border stripe style="width: 100%">
+              <el-table-column prop="year" label="年份" width="100" align="center"></el-table-column>
+              <el-table-column prop="gdp" label="生产总值（万元）" align="right">
+                <template slot-scope="scope">
+                  {{ formatNumber(scope.row.gdp) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="energy_consumption" label="能源消费（万吨标煤）" align="right">
+                <template slot-scope="scope">
+                  {{ formatNumber(scope.row.energy_consumption) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="co2_emission" label="CO₂排放（万吨）" align="right">
+                <template slot-scope="scope">
+                  {{ formatNumber(scope.row.co2_emission) }}
+                </template>
+              </el-table-column>
+              <el-table-column prop="renewable_ratio" label="可再生能源占比" align="right">
+                <template slot-scope="scope">
+                  {{ (scope.row.renewable_ratio * 100).toFixed(1) }}%
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
         </div>
       </div>
     </el-card>
@@ -32,7 +60,8 @@ export default {
   data() {
     return {
       uploadStatus: null,
-      dataInfo: null
+      dataInfo: null,
+      tableData: []
     }
   },
   created() {
@@ -54,6 +83,7 @@ export default {
             sectors: response.data.sectors,
             rows: response.data.rows
           }
+          this.tableData = response.data.data || []
           this.uploadStatus = {
             type: 'success',
             icon: 'el-icon-success',
@@ -68,6 +98,10 @@ export default {
             message: '加载示例数据失败!'
           }
         })
+    },
+    formatNumber(value) {
+      if (value === null || value === undefined) return '-'
+      return value.toLocaleString('zh-CN', { maximumFractionDigits: 2 })
     }
   }
 }
@@ -129,4 +163,20 @@ pre {
   margin-top: 0;
   color: #409EFF;
 }
-</style> 
+
+.data-table {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 4px;
+  border: 1px solid #ebeef5;
+}
+
+.data-table h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #303133;
+  font-size: 16px;
+  font-weight: 600;
+}
+</style>

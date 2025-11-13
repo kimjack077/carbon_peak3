@@ -249,3 +249,43 @@ backend/output/
 backend/data/*.csv
 !backend/data/base_year_data.csv
 !backend/data/scenarios.json
+
+# Temporary test and analysis files
+test_*.py
+analyze_*.py
+check_*.py
+fix_*.py
+process_*.py
+verify_*.py
+simple_app.py
+final_*.py
+
+# Output results
+*.png
+*.jpg
+*.jpeg
+chart_data_response.json
+
+# Redundant documentation
+CHECKLIST.md
+CODE_REVIEW.md
+IMPROVEMENTS.md
+MODEL_FIX_SUMMARY.md
+QUICK_FIX_GUIDE.md
+QUICK_REFERENCE.md
+SIMPLE_*.md
+prompt.md
+
+# Extra scripts
+start_simple.bat
+restart_backend.bat
+push_to_github.bat
+
+# Temporary documentation and debug files
+debug_*.txt
+*说明.md
+*总结.md
+*指南.md
+*要求.md
+的数据.md
+提示词.md

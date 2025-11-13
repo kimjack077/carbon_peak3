@@ -297,9 +297,15 @@ def use_example_data():
         processor = SimpleDataProcessor(target_path)
         data = processor.load_data()
         
+        # 读取数据内容
+        df = pd.read_csv(target_path)
+        
         return jsonify({
             'message': 'Example data loaded successfully',
-            'rows': len(data)
+            'rows': len(data),
+            'years': [int(df['year'].min()), int(df['year'].max())],
+            'sectors': ['全部'],
+            'data': df.to_dict(orient='records')
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
