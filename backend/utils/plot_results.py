@@ -7,21 +7,28 @@ import matplotlib
 matplotlib.rcParams['font.sans-serif'] = ['SimHei']  # 用来正常显示中文标签
 matplotlib.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
-def plot_carbon_peak(results_dict, output_path=None):
+def plot_carbon_peak(results_dict, output_path=None, historical_data=None):
     """绘制碳达峰预测图
     
     Args:
         results_dict: 包含不同情景结果的字典
         output_path: 输出图片路径，如果为None则显示图片
+        historical_data: 历史数据字典
     """
     plt.figure(figsize=(14, 9))
     
     colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E', '#BC4749']
     
+    # 绘制历史数据（如果有）
+    if historical_data:
+        plt.plot(historical_data['years'], historical_data['co2'], 
+                label='历史数据', linewidth=2.5, color='#333333', 
+                marker='s', markersize=5, linestyle='--', alpha=0.7)
+    
     # 绘制每个情景的碳排放曲线
     for idx, (scenario_name, results) in enumerate(results_dict.items()):
         color = colors[idx % len(colors)]
-        plt.plot(results['year'], results['CO2'], 
+        plt.plot(results['year'], results['co2_emission'], 
                 label=scenario_name, linewidth=2.5, color=color, marker='o', markersize=4)
     
     # 找出每个情景的峰值年份
@@ -31,13 +38,13 @@ def plot_carbon_peak(results_dict, output_path=None):
             peak_year = results.attrs['peak_year']
             peak_mask = results['year'] == peak_year
             if peak_mask.any():
-                peak_value = results.loc[peak_mask, 'CO2'].iloc[0]
+                peak_value = results.loc[peak_mask, 'co2_emission'].iloc[0]
             else:
                 continue
         else:
-            peak_idx = results['CO2'].idxmax()
+            peak_idx = results['co2_emission'].idxmax()
             peak_year = results.loc[peak_idx, 'year']
-            peak_value = results.loc[peak_idx, 'CO2']
+            peak_value = results.loc[peak_idx, 'co2_emission']
         
         color = colors[idx % len(colors)]
         plt.scatter(peak_year, peak_value, s=150, zorder=5, color=color, edgecolors='black', linewidths=2)
@@ -50,7 +57,7 @@ def plot_carbon_peak(results_dict, output_path=None):
     
     plt.title('碳排放达峰预测对比', fontsize=18, weight='bold', pad=20)
     plt.xlabel('年份', fontsize=14, weight='bold')
-    plt.ylabel('碳排放量 (tCO₂)', fontsize=14, weight='bold')
+    plt.ylabel('碳排放量 (tCO2)', fontsize=14, weight='bold')
     plt.grid(True, linestyle='--', alpha=0.3)
     plt.legend(fontsize=12, loc='best', framealpha=0.9)
     plt.tight_layout()
@@ -61,46 +68,72 @@ def plot_carbon_peak(results_dict, output_path=None):
     else:
         plt.show()
 
-def plot_energy_mix(results, output_path=None):
-    """绘制能源结构变化图
+def plot_gdp(results_dict, output_path=None, historical_data=None):
+    """绘制工业生产总值图
     
     Args:
-        results: 包含能源结构的DataFrame
+        results_dict: 包含不同情景结果的字典
         output_path: 输出图片路径，如果为None则显示图片
+        historical_data: 历史数据字典
     """
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12))
+    plt.figure(figsize=(14, 9))
     
-    years = results['year']
+    colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E', '#BC4749']
     
-    # 能源结构数据
-    coal_share = results['mix_coal'] * 100
-    oil_share = results['mix_oil'] * 100
-    gas_share = results['mix_gas'] * 100
-    ren_share = results['mix_ren'] * 100
-    power_share = results['power_share'] * 100
+    # 绘制历史数据（如果有）
+    if historical_data:
+        plt.plot(historical_data['years'], historical_data['gdp'], 
+                label='历史数据', linewidth=2.5, color='#333333', 
+                marker='s', markersize=5, linestyle='--', alpha=0.7)
     
-    # 绘制直燃能源结构
-    ax1.plot(years, coal_share, 'o-', label='煤炭占比', linewidth=2.5, markersize=6, color='#4A4A4A')
-    ax1.plot(years, oil_share, 's-', label='石油占比', linewidth=2.5, markersize=6, color='#D4A574')
-    ax1.plot(years, gas_share, '^-', label='天然气占比', linewidth=2.5, markersize=6, color='#87CEEB')
-    ax1.plot(years, ren_share, 'd-', label='可再生能源占比', linewidth=2.5, markersize=6, color='#6A994E')
+    # 绘制每个情景的GDP曲线
+    for idx, (scenario_name, results) in enumerate(results_dict.items()):
+        color = colors[idx % len(colors)]
+        plt.plot(results['year'], results['gdp'], 
+                label=scenario_name, linewidth=2.5, color=color, marker='o', markersize=4)
     
-    ax1.set_title('直燃能源结构变化趋势', fontsize=16, weight='bold', pad=15)
-    ax1.set_xlabel('年份', fontsize=12, weight='bold')
-    ax1.set_ylabel('占比 (%)', fontsize=12, weight='bold')
-    ax1.legend(fontsize=11, loc='best')
-    ax1.grid(True, linestyle='--', alpha=0.3)
+    plt.title('工业生产总值预测', fontsize=18, weight='bold', pad=20)
+    plt.xlabel('年份', fontsize=14, weight='bold')
+    plt.ylabel('工业总产值 (万元)', fontsize=14, weight='bold')
+    plt.grid(True, linestyle='--', alpha=0.3)
+    plt.legend(fontsize=12, loc='best', framealpha=0.9)
+    plt.tight_layout()
     
-    # 绘制电力占比变化
-    ax2.plot(years, power_share, 'o-', label='电力占比', linewidth=3, markersize=7, color='#2E86AB')
-    ax2.fill_between(years, 0, power_share, alpha=0.3, color='#2E86AB')
+    if output_path:
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        plt.close()
+    else:
+        plt.show()
+
+def plot_energy_consumption(results_dict, output_path=None, historical_data=None):
+    """绘制综合能耗图
     
-    ax2.set_title('电力占比变化趋势', fontsize=16, weight='bold', pad=15)
-    ax2.set_xlabel('年份', fontsize=12, weight='bold')
-    ax2.set_ylabel('电力占比 (%)', fontsize=12, weight='bold')
-    ax2.legend(fontsize=11, loc='best')
-    ax2.grid(True, linestyle='--', alpha=0.3)
+    Args:
+        results_dict: 包含不同情景结果的字典
+        output_path: 输出图片路径，如果为None则显示图片
+        historical_data: 历史数据字典
+    """
+    plt.figure(figsize=(14, 9))
     
+    colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E', '#BC4749']
+    
+    # 绘制历史数据（如果有）
+    if historical_data:
+        plt.plot(historical_data['years'], historical_data['energy'], 
+                label='历史数据', linewidth=2.5, color='#333333', 
+                marker='s', markersize=5, linestyle='--', alpha=0.7)
+    
+    # 绘制每个情景的能源消费曲线
+    for idx, (scenario_name, results) in enumerate(results_dict.items()):
+        color = colors[idx % len(colors)]
+        plt.plot(results['year'], results['energy_consumption'], 
+                label=scenario_name, linewidth=2.5, color=color, marker='o', markersize=4)
+    
+    plt.title('综合能源消费量预测', fontsize=18, weight='bold', pad=20)
+    plt.xlabel('年份', fontsize=14, weight='bold')
+    plt.ylabel('综合能源消费量 (万吨标准煤)', fontsize=14, weight='bold')
+    plt.grid(True, linestyle='--', alpha=0.3)
+    plt.legend(fontsize=12, loc='best', framealpha=0.9)
     plt.tight_layout()
     
     if output_path:

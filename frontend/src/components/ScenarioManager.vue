@@ -28,50 +28,19 @@
                 :max="0.2"
                 controls-position="right">
               </el-input-number>
-              <span class="param-unit">（如0.05表示5%/年）</span>
+              <span class="param-unit">（如0.083表示8.3%/年，历史值）</span>
             </el-form-item>
             
-            <el-form-item label="人口增长率" prop="population_growth_rate">
-              <el-input-number
-                v-model="scenarioForm.population_growth_rate"
-                :precision="4"
-                :step="0.001"
-                :min="-0.02"
-                :max="0.05"
-                controls-position="right">
-              </el-input-number>
-              <span class="param-unit">（如-0.0099表示-0.99%/年，负数表示人口下降）</span>
-            </el-form-item>
-            
-            <el-form-item label="能效提升率" prop="efficiency_improvement_rate">
+            <el-form-item label="能源效率改善率" prop="efficiency_improvement_rate">
               <el-input-number 
                 v-model="scenarioForm.efficiency_improvement_rate" 
                 :precision="3" 
                 :step="0.005" 
                 :min="0" 
-                :max="0.1"
+                :max="0.15"
                 controls-position="right">
               </el-input-number>
-              <span class="param-unit">（如0.02表示2%/年）</span>
-            </el-form-item>
-            
-            <el-form-item label="煤炭占比降低率" prop="coal_reduction_rate">
-              <el-input-number 
-                v-model="scenarioForm.coal_reduction_rate" 
-                :precision="3" 
-                :step="0.005" 
-                :min="0" 
-                :max="0.1"
-                controls-position="right">
-              </el-input-number>
-              <span class="param-unit">（如0.02表示2%/年）</span>
-            </el-form-item>
-            
-            <el-form-item label="预测方法" prop="trend_method">
-              <el-select v-model="scenarioForm.trend_method" placeholder="请选择预测方法">
-                <el-option label="线性回归" value="linear_regression"></el-option>
-                <el-option label="指数平滑" value="exponential_smoothing"></el-option>
-              </el-select>
+              <span class="param-unit">（如0.05表示能源强度下降5%/年）</span>
             </el-form-item>
             
             <el-form-item>
@@ -111,35 +80,17 @@
             <el-table-column
               prop="gdp_growth_rate"
               label="GDP增长率"
-              width="100">
+              width="110">
               <template slot-scope="scope">
                 {{ (scope.row.gdp_growth_rate * 100).toFixed(1) }}%
               </template>
             </el-table-column>
             <el-table-column
-              prop="population_growth_rate"
-              label="人口增长率"
-              width="100">
-              <template slot-scope="scope">
-                <span :style="{ color: scope.row.population_growth_rate < 0 ? '#F56C6C' : '#67C23A' }">
-                  {{ (scope.row.population_growth_rate * 100).toFixed(2) }}%
-                </span>
-              </template>
-            </el-table-column>
-            <el-table-column
               prop="efficiency_improvement_rate"
-              label="能效提升率"
-              width="100">
+              label="能源效率改善率"
+              width="140">
               <template slot-scope="scope">
                 {{ (scope.row.efficiency_improvement_rate * 100).toFixed(1) }}%
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="coal_reduction_rate"
-              label="煤炭占比降低率"
-              width="120">
-              <template slot-scope="scope">
-                {{ (scope.row.coal_reduction_rate * 100).toFixed(1) }}%
               </template>
             </el-table-column>
             <el-table-column
@@ -184,11 +135,8 @@ export default {
       scenarioForm: {
         name: '',
         model_type: 'leap',
-        gdp_growth_rate: 0.05,
-        population_growth_rate: -0.0099,
-        efficiency_improvement_rate: 0.02,
-        coal_reduction_rate: 0.02,
-        trend_method: 'linear_regression'
+        gdp_growth_rate: 0.083,
+        efficiency_improvement_rate: 0.05
       },
       rules: {
         name: [
@@ -227,13 +175,10 @@ export default {
     },
     createDefaultScenario() {
       const defaultScenario = {
-        name: '默认情景',
+        name: '历史趋势情景',
         model_type: 'leap',
-        gdp_growth_rate: 0.05,
-        population_growth_rate: -0.0099,
-        efficiency_improvement_rate: 0.02,
-        coal_reduction_rate: 0.02,
-        trend_method: 'linear_regression'
+        gdp_growth_rate: 0.083,
+        efficiency_improvement_rate: 0.05
       }
       
       axios.post('/api/scenarios', defaultScenario)

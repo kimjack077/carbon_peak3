@@ -23,20 +23,10 @@
     </el-row>
     
     <el-row :gutter="20" style="margin-top: 20px;">
-      <el-col :span="24">
+      <el-col :span="12">
         <el-card class="chart-card">
           <div slot="header">
-            <div class="header-with-select">
-              <h2>能源结构变化</h2>
-              <el-select v-model="selectedScenarioForEnergyMix" placeholder="选择情景" @change="updateEnergyMixChart">
-                <el-option
-                  v-for="scenarioName in Object.keys(chartData)"
-                  :key="scenarioName"
-                  :label="scenarioName"
-                  :value="scenarioName">
-                </el-option>
-              </el-select>
-            </div>
+            <h2>工业生产总值</h2>
           </div>
           <div v-if="loading" class="loading-container">
             <i class="el-icon-loading"></i>
@@ -47,7 +37,25 @@
             <p>{{ error }}</p>
           </div>
           <div v-else class="chart-container">
-            <div id="energy-mix-chart" class="echarts-container" ref="energyChart"></div>
+            <div id="gdp-chart" class="echarts-container" ref="gdpChart"></div>
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card class="chart-card">
+          <div slot="header">
+            <h2>综合能源消费量</h2>
+          </div>
+          <div v-if="loading" class="loading-container">
+            <i class="el-icon-loading"></i>
+            <p>加载中...</p>
+          </div>
+          <div v-else-if="error" class="error-container">
+            <i class="el-icon-warning"></i>
+            <p>{{ error }}</p>
+          </div>
+          <div v-else class="chart-container">
+            <div id="energy-consumption-chart" class="echarts-container" ref="energyConsumptionChart"></div>
           </div>
         </el-card>
       </el-col>
@@ -87,54 +95,42 @@
               <el-table-column
                 prop="year"
                 label="年份"
-                width="80">
+                width="100"
+                fixed="left">
               </el-table-column>
               <el-table-column
-                prop="gdp"
-                label="GDP(万亿元)"
-                width="120">
+                prop="data_type"
+                label="数据类型"
+                width="100"
+                fixed="left">
                 <template slot-scope="scope">
-                  {{ scope.row.gdp.toFixed(2) }}
-                </template>
-              </el-table-column>
-              <el-table-column
-                prop="population"
-                label="人口(万人)"
-                width="120">
-                <template slot-scope="scope">
-                  {{ scope.row.population.toFixed(0) }}
+                  <el-tag :type="scope.row.data_type === 'historical' ? 'info' : 'success'" size="small">
+                    {{ scope.row.data_type === 'historical' ? '历史' : '预测' }}
+                  </el-tag>
                 </template>
               </el-table-column>
               <el-table-column
                 prop="energy_consumption"
-                label="能源消费(万吨标煤)"
-                width="160">
+                label="综合能源消费量(万吨标准煤)"
+                width="200">
                 <template slot-scope="scope">
-                  {{ scope.row.energy_consumption.toFixed(2) }}
+                  {{ scope.row.energy_consumption ? scope.row.energy_consumption.toFixed(2) : 'N/A' }}
                 </template>
               </el-table-column>
               <el-table-column
-                prop="total_emission"
-                label="碳排放量(万吨)"
-                width="140">
+                prop="gdp"
+                label="工业总产值(现价)(万元)"
+                width="200">
                 <template slot-scope="scope">
-                  {{ scope.row.total_emission.toFixed(2) }}
+                  {{ scope.row.gdp ? scope.row.gdp.toFixed(2) : 'N/A' }}
                 </template>
               </el-table-column>
               <el-table-column
-                prop="emission_per_capita"
-                label="人均碳排放(吨/人)"
-                width="160">
+                prop="co2_emission"
+                label="二氧化碳排放量合计(万吨二氧化碳当量)"
+                width="280">
                 <template slot-scope="scope">
-                  {{ scope.row.emission_per_capita.toFixed(4) }}
-                </template>
-              </el-table-column>
-              <el-table-column
-                prop="emission_per_gdp"
-                label="单位GDP碳排放(吨/万元)"
-                width="180">
-                <template slot-scope="scope">
-                  {{ scope.row.emission_per_gdp.toFixed(4) }}
+                  {{ scope.row.co2_emission ? scope.row.co2_emission.toFixed(2) : 'N/A' }}
                 </template>
               </el-table-column>
             </el-table>
@@ -169,10 +165,10 @@ export default {
       error: null,
       chartData: {},
       carbonPeakChart: null,
-      energyMixChart: null,
+      gdpChart: null,
+      energyConsumptionChart: null,
       scenarios: [],
       selectedScenario: '',
-      selectedScenarioForEnergyMix: '',
       scenarioResults: [],
       loadingData: false,
       dataError: null,
@@ -209,8 +205,11 @@ export default {
       if (this.carbonPeakChart) {
         this.carbonPeakChart.resize()
       }
-      if (this.energyMixChart) {
-        this.energyMixChart.resize()
+      if (this.gdpChart) {
+        this.gdpChart.resize()
+      }
+      if (this.energyConsumptionChart) {
+        this.energyConsumptionChart.resize()
       }
     }
     window.addEventListener('resize', this.handleResize)
@@ -270,8 +269,11 @@ export default {
     if (this.carbonPeakChart) {
       this.carbonPeakChart.dispose()
     }
-    if (this.energyMixChart) {
-      this.energyMixChart.dispose()
+    if (this.gdpChart) {
+      this.gdpChart.dispose()
+    }
+    if (this.energyConsumptionChart) {
+      this.energyConsumptionChart.dispose()
     }
   },
   methods: {
@@ -301,44 +303,56 @@ export default {
     loadChartData() {
       axios.get('/api/chart-data')
         .then(response => {
-          this.chartData = response.data
+          // 验证响应数据是否为对象
+          if (typeof response.data === 'string') {
+            console.error('API returned string instead of object:', response.data.substring(0, 100))
+            this.error = 'API返回数据格式错误'
+            this.loading = false
+            return
+          }
+          
+          if (response.data && response.data.error) {
+            this.error = response.data.error
+            this.loading = false
+            return
+          }
+          
+          this.chartData = response.data || {}
+          console.log('Chart data loaded:', this.chartData)
           this.loading = false
           
           if (Object.keys(this.chartData).length > 0) {
-            this.selectedScenarioForEnergyMix = Object.keys(this.chartData)[0]
-            
             // 在DOM更新后初始化图表
             this.$nextTick(() => {
-              this.initCarbonPeakChart()
-              this.updateEnergyMixChart()
+              try {
+                this.initCarbonPeakChart()
+              } catch (e) {
+                console.error('Carbon peak chart init failed:', e)
+              }
+              
+              try {
+                this.initGdpChart()
+              } catch (e) {
+                console.error('GDP chart init failed:', e)
+              }
+              
+              try {
+                this.initEnergyConsumptionChart()
+              } catch (e) {
+                console.error('Energy consumption chart init failed:', e)
+              }
 
               // 使用多个延时确保图表正确显示
               setTimeout(() => {
-                if (this.carbonPeakChart) {
-                  this.carbonPeakChart.resize()
-                }
-                if (this.energyMixChart) {
-                  this.energyMixChart.resize()
-                }
+                this.forceResizeCharts()
               }, 100)
 
               setTimeout(() => {
-                if (this.carbonPeakChart) {
-                  this.carbonPeakChart.resize()
-                }
-                if (this.energyMixChart) {
-                  this.energyMixChart.resize()
-                }
+                this.forceResizeCharts()
               }, 300)
 
               setTimeout(() => {
-                if (this.carbonPeakChart) {
-                  this.carbonPeakChart.resize()
-                }
-                if (this.energyMixChart) {
-                  this.energyMixChart.resize()
-                }
-
+                this.forceResizeCharts()
                 // 启动ResizeObserver
                 this.startResizeObserver()
               }, 500)
@@ -372,9 +386,39 @@ export default {
       const series = []
       const markPoints = []
       
+      // 添加历史数据系列（只添加一次）
+      const firstScenario = Object.keys(this.chartData)[0]
+      if (firstScenario && this.chartData[firstScenario].historical_years && 
+          this.chartData[firstScenario].historical_years.length > 0 &&
+          this.chartData[firstScenario].emissions) {
+        const historicalYears = this.chartData[firstScenario].historical_years
+        const historicalEmissions = this.chartData[firstScenario].historical_emissions || []
+        
+        series.push({
+          name: '历史数据',
+          type: 'line',
+          data: historicalYears.map((year, i) => [year, historicalEmissions[i]]),
+          lineStyle: {
+            width: 2.5,
+            type: 'dashed',
+            color: '#333333'
+          },
+          symbol: 'rect',
+          symbolSize: 6,
+          itemStyle: {
+            color: '#333333'
+          },
+          z: 10  // 确保在最上层
+        })
+      }
+      
       // 为每个情景添加一条线和一个标记点
       Object.keys(this.chartData).forEach((scenarioName, index) => {
         const data = this.chartData[scenarioName]
+        if (!data || !data.years || !data.emissions || !data.peak) {
+          console.warn(`Incomplete data for scenario: ${scenarioName}`)
+          return
+        }
         const years = data.years
         const emissions = data.emissions
         const peak = data.peak
@@ -411,6 +455,7 @@ export default {
       })
       
       // 图表选项
+      const legendNames = series.map(s => s.name)
       const option = {
         title: {
           text: '碳排放达峰预测',
@@ -456,7 +501,7 @@ export default {
           }
         },
         legend: {
-          data: Object.keys(this.chartData),
+          data: legendNames,
           bottom: 10,
           icon: 'roundRect',
           itemWidth: 12,
@@ -480,8 +525,8 @@ export default {
           nameTextStyle: {
             fontWeight: 'bold'
           },
-          min: Math.min(...Object.values(this.chartData).map(data => Math.min(...data.years))),
-          max: Math.max(...Object.values(this.chartData).map(data => Math.max(...data.years))),
+          min: 2019,
+          max: 2060,
           minorTick: {
             show: true
           },
@@ -529,59 +574,72 @@ export default {
             }
           }
         },
-        series: series.map((serie, index) => ({
-          ...serie,
-          markPoint: {
-            data: [markPoints[index]],
-            symbol: 'pin',
-            symbolSize: 60,
-            itemStyle: {
-              shadowColor: 'rgba(0, 0, 0, 0.3)',
-              shadowBlur: 10,
-              shadowOffsetX: 2,
-              shadowOffsetY: 2
-            },
-            label: {
-              formatter: function(params) {
-                // 确保显示的年份与横坐标对应的位置一致
-                return `${params.data.coord[0]}年`;
-              },
-              position: 'top',
-              fontSize: 12,
-              fontWeight: 'bold'
-            },
-            emphasis: {
-              label: {
-                formatter: '{c}',
-                show: true,
-                fontSize: 12
-              },
+        series: series.map((serie, index) => {
+          // 历史数据系列不需要markPoint
+          if (serie.name === '历史数据') {
+            return serie;
+          }
+          
+          // 计算markPoint的正确索引（考虑历史数据系列）
+          const hasHistorical = series[0] && series[0].name === '历史数据';
+          const markPointIndex = hasHistorical ? index - 1 : index;
+          
+          if (markPointIndex < 0 || markPointIndex >= markPoints.length) {
+            return serie;
+          }
+          
+          return {
+            ...serie,
+            markPoint: {
+              data: [markPoints[markPointIndex]],
+              symbol: 'pin',
+              symbolSize: 60,
               itemStyle: {
-                shadowBlur: 20
-              }
-            }
-          },
-          markLine: {
-            silent: true,
-            lineStyle: {
-              color: this.getColorByIndex(index),
-              type: 'dashed',
-              opacity: 0.5
-            },
-            data: [
-              {
-                xAxis: markPoints[index].coord[0],
+                shadowColor: 'rgba(0, 0, 0, 0.3)',
+                shadowBlur: 10,
+                shadowOffsetX: 2,
+                shadowOffsetY: 2
+              },
+              label: {
+                formatter: function(params) {
+                  return `${params.data.coord[0]}年`;
+                },
+                position: 'top',
+                fontSize: 12,
+                fontWeight: 'bold'
+              },
+              emphasis: {
                 label: {
-                  formatter: function(params) {
-                    // 确保显示的年份与横坐标对应的位置一致
-                    return `${params.value}年`;
-                  },
-                  position: 'end'
+                  formatter: '{c}',
+                  show: true,
+                  fontSize: 12
+                },
+                itemStyle: {
+                  shadowBlur: 20
                 }
               }
-            ]
-          }
-        }))
+            },
+            markLine: {
+              silent: true,
+              lineStyle: {
+                color: this.getColorByIndex(markPointIndex),
+                type: 'dashed',
+                opacity: 0.5
+              },
+              data: [
+                {
+                  xAxis: markPoints[markPointIndex].coord[0],
+                  label: {
+                    formatter: function(params) {
+                      return `${params.value}年`;
+                    },
+                    position: 'end'
+                  }
+                }
+              ]
+            }
+          };
+        })
       }
       
       // 设置图表选项
@@ -606,324 +664,219 @@ export default {
         }
       }, 300)
     },
-    updateEnergyMixChart() {
-      if (!this.selectedScenarioForEnergyMix || !this.chartData[this.selectedScenarioForEnergyMix]) {
-        return
-      }
-      
-      // 获取选中情景的能源结构数据
-      const data = this.chartData[this.selectedScenarioForEnergyMix]
-      const years = data.years
-      const coalData = data.energy_mix.coal
-      const elecData = data.energy_mix.elec
-      const otherData = data.energy_mix.other
-      
-      // 计算总能耗和能源占比
-      const totalData = years.map((_, i) => coalData[i] + elecData[i] + otherData[i])
-      const coalPercentData = years.map((_, i) => (coalData[i] / totalData[i] * 100).toFixed(1))
-      const elecPercentData = years.map((_, i) => (elecData[i] / totalData[i] * 100).toFixed(1))
-      const otherPercentData = years.map((_, i) => (otherData[i] / totalData[i] * 100).toFixed(1))
-      
-      // 初始化能源结构图表
-      const chartDom = document.getElementById('energy-mix-chart')
+    initGdpChart() {
+      const chartDom = document.getElementById('gdp-chart')
       if (!chartDom) {
-        console.error('Energy mix chart container not found')
+        console.error('GDP chart container not found')
         return
       }
 
-      // 确保容器有尺寸
       if (chartDom.offsetWidth === 0 || chartDom.offsetHeight === 0) {
-        console.warn('Energy mix chart container has no size, retrying...')
-        setTimeout(() => this.updateEnergyMixChart(), 100)
+        console.warn('GDP chart container has no size, retrying...')
+        setTimeout(() => this.initGdpChart(), 100)
         return
       }
 
-      if (!this.energyMixChart) {
-        this.energyMixChart = echarts.init(chartDom)
+      this.gdpChart = echarts.init(chartDom)
+      
+      // 准备图表数据
+      const series = []
+      
+      // 添加历史数据系列
+      const firstScenario = Object.keys(this.chartData)[0]
+      if (firstScenario && this.chartData[firstScenario].historical_years && 
+          this.chartData[firstScenario].historical_years.length > 0 &&
+          this.chartData[firstScenario].gdp) {
+        const historicalYears = this.chartData[firstScenario].historical_years
+        const historicalGdp = this.chartData[firstScenario].historical_gdp || []
+        
+        if (historicalGdp.length > 0) {
+          series.push({
+            name: '历史数据',
+            type: 'line',
+            data: historicalYears.map((year, i) => [year, historicalGdp[i]]),
+            lineStyle: {
+              width: 2.5,
+              type: 'dashed',
+              color: '#333333'
+            },
+            symbol: 'rect',
+            symbolSize: 6,
+            itemStyle: {
+              color: '#333333'
+            },
+            z: 10
+          })
+        }
       }
       
-      // 图表选项
+      Object.keys(this.chartData).forEach((scenarioName) => {
+        const data = this.chartData[scenarioName]
+        if (!data || !data.years) {
+          console.warn(`Incomplete data for scenario: ${scenarioName}`)
+          return
+        }
+        const years = data.years
+        const gdpData = data.gdp || []
+        
+        if (gdpData.length > 0) {
+          series.push({
+            name: scenarioName,
+            type: 'line',
+            data: years.map((year, i) => [year, gdpData[i] || 0]),
+            smooth: true,
+            lineStyle: { width: 3 },
+            symbol: 'circle',
+            symbolSize: 8
+          })
+        }
+      })
+      
+      const legendNames = series.map(s => s.name)
       const option = {
         title: {
-          text: '能源结构变化预测',
+          text: '工业生产总值预测',
           left: 'center',
-          top: 10,
-          textStyle: {
-            fontSize: 18,
-            fontWeight: 'bold'
-          }
+          textStyle: { fontSize: 16, fontWeight: 'bold' }
         },
         tooltip: {
           trigger: 'axis',
           backgroundColor: 'rgba(255, 255, 255, 0.9)',
           borderColor: '#ccc',
-          borderWidth: 1,
-          textStyle: {
-            color: '#333'
-          },
-          axisPointer: {
-            type: 'shadow'
-          },
-          formatter: function(params) {
-            const year = params[0].name
-            let result = `<div style="font-weight:bold;margin-bottom:5px;">${year}年</div>`
-            
-            // 柱状图数据
-            const barParams = params.filter(param => param.seriesType === 'bar')
-            const totalEnergy = barParams.reduce((sum, param) => sum + param.value, 0).toFixed(2)
-            result += `<div style="margin:3px 0;font-weight:bold;">总能耗: ${totalEnergy}万吨标煤</div>`
-            
-            barParams.forEach(param => {
-              const color = param.color
-              const value = param.value.toFixed(2)
-              const percentage = (param.value / totalEnergy * 100).toFixed(1)
-              result += `<div style="display:flex;align-items:center;margin:3px 0">
-                <span style="display:inline-block;width:10px;height:10px;background:${color};margin-right:6px;border-radius:50%"></span>
-                <span style="margin-right:8px;">${param.seriesName}:</span>
-                <span style="font-weight:bold">${value}万吨标煤 (${percentage}%)</span>
-              </div>`
-            })
-            
-            // 折线图数据
-            const lineParams = params.filter(param => param.seriesType === 'line')
-            if (lineParams.length > 0) {
-              result += `<div style="margin-top:8px;border-top:1px dashed #ccc;padding-top:5px;">能源占比:</div>`
-              lineParams.forEach(param => {
-                const color = param.color
-                result += `<div style="display:flex;align-items:center;margin:3px 0">
-                  <span style="display:inline-block;width:10px;height:10px;background:${color};margin-right:6px;border-radius:50%"></span>
-                  <span style="margin-right:8px;">${param.seriesName}:</span>
-                  <span style="font-weight:bold">${param.value}%</span>
-                </div>`
-              })
-            }
-            
-            return result
-          }
+          borderWidth: 1
         },
         legend: {
-          data: ['煤炭', '电力', '其他清洁能源', '煤炭占比', '电力占比', '清洁能源占比'],
-          bottom: 10,
-          icon: 'roundRect',
-          itemWidth: 12,
-          itemHeight: 12
+          data: legendNames,
+          bottom: 10
         },
-        grid: {
-          left: '5%',
-          right: '5%',
-          top: '15%',
-          bottom: '15%',
-          containLabel: true
-        },
+        grid: { left: '10%', right: '5%', top: '15%', bottom: '15%', containLabel: true },
         xAxis: {
-          type: 'category',
-          data: years,
+          type: 'value',
           name: '年份',
           nameLocation: 'middle',
           nameGap: 30,
-          nameTextStyle: {
-            fontWeight: 'bold'
-          },
-          axisLabel: {
-            formatter: '{value}',
-            fontWeight: 'bold'
-          },
-          axisLine: {
-            lineStyle: {
-              color: '#333'
-            }
-          },
-          splitLine: {
-            show: false
-          },
-          axisTick: {
-            alignWithLabel: true
-          }
+          min: 2019,
+          max: 2060
         },
-        yAxis: [
-          {
-            type: 'value',
-            name: '能源消费(万吨标煤)',
-            position: 'left',
-            nameLocation: 'middle',
-            nameGap: 50,
-            nameTextStyle: {
-              fontWeight: 'bold'
-            },
-            axisLabel: {
-              formatter: '{value}',
-              fontWeight: 'bold'
-            },
-            axisLine: {
-              lineStyle: {
-                color: '#333'
-              }
-            },
-            splitLine: {
-              lineStyle: {
-                color: '#eee'
-              }
-            }
-          },
-          {
-            type: 'value',
-            name: '占比(%)',
-            position: 'right',
-            nameLocation: 'middle',
-            nameGap: 50,
-            nameTextStyle: {
-              fontWeight: 'bold'
-            },
-            min: 0,
-            max: 100,
-            axisLabel: {
-              formatter: '{value}%',
-              fontWeight: 'bold'
-            },
-            axisLine: {
-              lineStyle: {
-                color: '#333'
-              }
-            },
-            splitLine: {
-              show: false
-            }
-          }
-        ],
-        series: [
-          {
-            name: '煤炭',
-            type: 'bar',
-            stack: '能源',
-            emphasis: {
-              focus: 'series'
-            },
-            data: coalData,
-            itemStyle: {
-              color: '#777',
-              borderRadius: [0, 0, 0, 0]
-            },
-            barWidth: '60%'
-          },
-          {
-            name: '电力',
-            type: 'bar',
-            stack: '能源',
-            emphasis: {
-              focus: 'series'
-            },
-            data: elecData,
-            itemStyle: {
-              color: '#409EFF',
-              borderRadius: [0, 0, 0, 0]
-            }
-          },
-          {
-            name: '其他清洁能源',
-            type: 'bar',
-            stack: '能源',
-            emphasis: {
-              focus: 'series'
-            },
-            data: otherData,
-            itemStyle: {
-              color: '#67C23A',
-              borderRadius: [4, 4, 0, 0]
-            }
-          },
-          {
-            name: '煤炭占比',
-            type: 'line',
-            yAxisIndex: 1,
-            data: coalPercentData,
-            symbol: 'circle',
-            symbolSize: 8,
-            smooth: true,
-            lineStyle: {
-              width: 3,
-              type: 'dashed',
-              color: '#777'
-            },
-            itemStyle: {
-              color: '#777',
-              borderWidth: 2,
-              borderColor: '#fff'
-            },
-            emphasis: {
-              scale: true,
-              focus: 'series'
-            }
-          },
-          {
-            name: '电力占比',
-            type: 'line',
-            yAxisIndex: 1,
-            data: elecPercentData,
-            symbol: 'circle',
-            symbolSize: 8,
-            smooth: true,
-            lineStyle: {
-              width: 3,
-              type: 'dashed',
-              color: '#409EFF'
-            },
-            itemStyle: {
-              color: '#409EFF',
-              borderWidth: 2,
-              borderColor: '#fff'
-            },
-            emphasis: {
-              scale: true,
-              focus: 'series'
-            }
-          },
-          {
-            name: '清洁能源占比',
-            type: 'line',
-            yAxisIndex: 1,
-            data: otherPercentData,
-            symbol: 'circle',
-            symbolSize: 8,
-            smooth: true,
-            lineStyle: {
-              width: 3,
-              type: 'dashed',
-              color: '#67C23A'
-            },
-            itemStyle: {
-              color: '#67C23A',
-              borderWidth: 2,
-              borderColor: '#fff'
-            },
-            emphasis: {
-              scale: true,
-              focus: 'series'
-            }
-          }
-        ]
+        yAxis: {
+          type: 'value',
+          name: '工业总产值(万元)',
+          nameLocation: 'middle',
+          nameGap: 50
+        },
+        series: series
       }
       
-      // 设置图表选项
-      this.energyMixChart.setOption(option, true)
-
-      // 初始化后立即调用resize确保图表正确显示
+      this.gdpChart.setOption(option)
       this.$nextTick(() => {
-        if (this.energyMixChart) {
-          this.energyMixChart.resize()
-        }
+        if (this.gdpChart) this.gdpChart.resize()
       })
+    },
+    initEnergyConsumptionChart() {
+      const chartDom = document.getElementById('energy-consumption-chart')
+      if (!chartDom) {
+        console.error('Energy consumption chart container not found')
+        return
+      }
 
-      setTimeout(() => {
-        if (this.energyMixChart) {
-          this.energyMixChart.resize()
-        }
-      }, 100)
+      if (chartDom.offsetWidth === 0 || chartDom.offsetHeight === 0) {
+        console.warn('Energy consumption chart container has no size, retrying...')
+        setTimeout(() => this.initEnergyConsumptionChart(), 100)
+        return
+      }
 
-      setTimeout(() => {
-        if (this.energyMixChart) {
-          this.energyMixChart.resize()
+      this.energyConsumptionChart = echarts.init(chartDom)
+      
+      const series = []
+      
+      // 添加历史数据系列
+      const firstScenario = Object.keys(this.chartData)[0]
+      if (firstScenario && this.chartData[firstScenario].historical_years && 
+          this.chartData[firstScenario].historical_years.length > 0 &&
+          this.chartData[firstScenario].energy_mix && 
+          this.chartData[firstScenario].energy_mix.total) {
+        const historicalYears = this.chartData[firstScenario].historical_years
+        const historicalEnergy = this.chartData[firstScenario].historical_energy || []
+        
+        if (historicalEnergy.length > 0) {
+          series.push({
+            name: '历史数据',
+            type: 'line',
+            data: historicalYears.map((year, i) => [year, historicalEnergy[i]]),
+            lineStyle: {
+              width: 2.5,
+              type: 'dashed',
+              color: '#333333'
+            },
+            symbol: 'rect',
+            symbolSize: 6,
+            itemStyle: {
+              color: '#333333'
+            },
+            z: 10
+          })
         }
-      }, 300)
+      }
+      
+      Object.keys(this.chartData).forEach((scenarioName) => {
+        const data = this.chartData[scenarioName]
+        if (!data || !data.years) {
+          console.warn(`Incomplete data for scenario: ${scenarioName}`)
+          return
+        }
+        const years = data.years
+        const energyData = data.energy_mix && data.energy_mix.total ? data.energy_mix.total : years.map(() => 0)
+        
+        series.push({
+          name: scenarioName,
+          type: 'line',
+          data: years.map((year, i) => [year, energyData[i] || 0]),
+          smooth: true,
+          lineStyle: { width: 3 },
+          symbol: 'circle',
+          symbolSize: 8
+        })
+      })
+      
+      const legendNames = series.map(s => s.name)
+      const option = {
+        title: {
+          text: '综合能源消费量预测',
+          left: 'center',
+          textStyle: { fontSize: 16, fontWeight: 'bold' }
+        },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          borderColor: '#ccc',
+          borderWidth: 1
+        },
+        legend: {
+          data: legendNames,
+          bottom: 10
+        },
+        grid: { left: '10%', right: '5%', top: '15%', bottom: '15%', containLabel: true },
+        xAxis: {
+          type: 'value',
+          name: '年份',
+          nameLocation: 'middle',
+          nameGap: 30,
+          min: 2019,
+          max: 2060
+        },
+        yAxis: {
+          type: 'value',
+          name: '综合能源消赹量(万吨标准煤)',
+          nameLocation: 'middle',
+          nameGap: 50
+        },
+        series: series
+      }
+      
+      this.energyConsumptionChart.setOption(option)
+      this.$nextTick(() => {
+        if (this.energyConsumptionChart) this.energyConsumptionChart.resize()
+      })
     },
     getColorByIndex(index) {
       // 预定义一组颜色
@@ -1030,46 +983,58 @@ export default {
 
       // 立即resize
       resizeChart(this.carbonPeakChart)
-      resizeChart(this.energyMixChart)
+      resizeChart(this.gdpChart)
+      resizeChart(this.energyConsumptionChart)
 
       // 延时resize
       setTimeout(() => {
         resizeChart(this.carbonPeakChart)
-        resizeChart(this.energyMixChart)
+        resizeChart(this.gdpChart)
+        resizeChart(this.energyConsumptionChart)
       }, 100)
 
       setTimeout(() => {
         resizeChart(this.carbonPeakChart)
-        resizeChart(this.energyMixChart)
+        resizeChart(this.gdpChart)
+        resizeChart(this.energyConsumptionChart)
       }, 300)
 
       setTimeout(() => {
         resizeChart(this.carbonPeakChart)
-        resizeChart(this.energyMixChart)
+        resizeChart(this.gdpChart)
+        resizeChart(this.energyConsumptionChart)
       }, 500)
     },
     startResizeObserver() {
       if (this.resizeObserver) {
         const carbonContainer = document.getElementById('carbon-peak-chart')
-        const energyContainer = document.getElementById('energy-mix-chart')
+        const gdpContainer = document.getElementById('gdp-chart')
+        const energyConsumptionContainer = document.getElementById('energy-consumption-chart')
 
         if (carbonContainer) {
           this.resizeObserver.observe(carbonContainer)
         }
-        if (energyContainer) {
-          this.resizeObserver.observe(energyContainer)
+        if (gdpContainer) {
+          this.resizeObserver.observe(gdpContainer)
+        }
+        if (energyConsumptionContainer) {
+          this.resizeObserver.observe(energyConsumptionContainer)
         }
       }
 
       if (this.intersectionObserver) {
         const carbonContainer = document.getElementById('carbon-peak-chart')
-        const energyContainer = document.getElementById('energy-mix-chart')
+        const gdpContainer = document.getElementById('gdp-chart')
+        const energyConsumptionContainer = document.getElementById('energy-consumption-chart')
 
         if (carbonContainer) {
           this.intersectionObserver.observe(carbonContainer)
         }
-        if (energyContainer) {
-          this.intersectionObserver.observe(energyContainer)
+        if (gdpContainer) {
+          this.intersectionObserver.observe(gdpContainer)
+        }
+        if (energyConsumptionContainer) {
+          this.intersectionObserver.observe(energyConsumptionContainer)
         }
       }
     },
@@ -1088,20 +1053,36 @@ export default {
         document.body.removeChild(link)
       }
       
-      if (this.energyMixChart) {
+      if (this.gdpChart) {
         setTimeout(() => {
-          const url = this.energyMixChart.getDataURL({
+          const url = this.gdpChart.getDataURL({
             type: 'png',
             pixelRatio: 2,
             backgroundColor: '#fff'
           })
           const link = document.createElement('a')
-          link.download = '能源结构变化.png'
+          link.download = '工业生产总值.png'
           link.href = url
           document.body.appendChild(link)
           link.click()
           document.body.removeChild(link)
         }, 100)
+      }
+
+      if (this.energyConsumptionChart) {
+        setTimeout(() => {
+          const url = this.energyConsumptionChart.getDataURL({
+            type: 'png',
+            pixelRatio: 2,
+            backgroundColor: '#fff'
+          })
+          const link = document.createElement('a')
+          link.download = '综合能源消费量.png'
+          link.href = url
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+        }, 200)
       }
     },
     goToScenarios() {
