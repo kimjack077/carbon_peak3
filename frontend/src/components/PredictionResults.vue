@@ -1,14 +1,26 @@
-<template>
+﻿<template>
   <div class="prediction-results">
-    <el-row :gutter="20">
+    <el-row :gutter="24">
       <el-col :span="24">
-        <el-card class="chart-card">
-          <div slot="header">
-            <h2>碳排放达峰预测</h2>
+        <el-card class="chart-card" shadow="hover">
+          <div slot="header" class="card-header">
+            <span class="card-title">碳排放达峰预测</span>
+            <div class="peak-summary" v-if="peakSummaries.length > 0">
+              <el-tag
+                v-for="summary in peakSummaries"
+                :key="summary.name"
+                :type="summary.type"
+                size="small"
+                class="peak-tag"
+              >
+                {{ summary.name }}: {{ summary.year }}年达峰
+              </el-tag>
+            </div>
           </div>
+
           <div v-if="loading" class="loading-container">
             <i class="el-icon-loading"></i>
-            <p>正在生成预测结果，请稍候...</p>
+            <p>正在生成预测结果...</p>
           </div>
           <div v-else-if="error" class="error-container">
             <i class="el-icon-warning"></i>
@@ -16,138 +28,80 @@
             <el-button type="primary" @click="runAutoPrediction">重新运行预测</el-button>
           </div>
           <div v-else class="chart-container">
-            <div id="carbon-peak-chart" class="echarts-container" ref="carbonChart"></div>
+            <div id="carbon-peak-chart" class="echarts-container"></div>
           </div>
         </el-card>
       </el-col>
     </el-row>
-    
-    <el-row :gutter="20" style="margin-top: 20px;">
-      <el-col :span="12">
-        <el-card class="chart-card">
-          <div slot="header">
-            <h2>工业生产总值</h2>
+
+    <el-row :gutter="24" style="margin-top: 24px;">
+      <el-col :xs="24" :sm="24" :md="12" :lg="12">
+        <el-card class="chart-card" shadow="hover">
+          <div slot="header" class="card-header">
+            <span class="card-title">GDP预测</span>
           </div>
-          <div v-if="loading" class="loading-container">
-            <i class="el-icon-loading"></i>
-            <p>加载中...</p>
-          </div>
-          <div v-else-if="error" class="error-container">
-            <i class="el-icon-warning"></i>
-            <p>{{ error }}</p>
-          </div>
-          <div v-else class="chart-container">
-            <div id="gdp-chart" class="echarts-container" ref="gdpChart"></div>
+          <div class="chart-container">
+            <div id="gdp-chart" class="echarts-container"></div>
           </div>
         </el-card>
       </el-col>
-      <el-col :span="12">
-        <el-card class="chart-card">
-          <div slot="header">
-            <h2>综合能源消费量</h2>
+      <el-col :xs="24" :sm="24" :md="12" :lg="12">
+        <el-card class="chart-card" shadow="hover">
+          <div slot="header" class="card-header">
+            <span class="card-title">能源消费结构</span>
+            <el-radio-group v-model="energyChartType" size="small">
+              <el-radio-button label="stack">堆叠柱状图</el-radio-button>
+              <el-radio-button label="line">趋势图</el-radio-button>
+            </el-radio-group>
           </div>
-          <div v-if="loading" class="loading-container">
-            <i class="el-icon-loading"></i>
-            <p>加载中...</p>
-          </div>
-          <div v-else-if="error" class="error-container">
-            <i class="el-icon-warning"></i>
-            <p>{{ error }}</p>
-          </div>
-          <div v-else class="chart-container">
-            <div id="energy-consumption-chart" class="echarts-container" ref="energyConsumptionChart"></div>
+          <div class="chart-container">
+            <div id="energy-chart" class="echarts-container"></div>
           </div>
         </el-card>
       </el-col>
     </el-row>
-    
-    <el-row :gutter="20" style="margin-top: 20px;">
+
+    <el-row :gutter="24" style="margin-top: 24px;">
       <el-col :span="24">
-        <el-card class="data-card">
-          <div slot="header">
-            <div class="header-with-select">
-              <h2>预测数据详情</h2>
-              <el-select v-model="selectedScenario" placeholder="选择情景" @change="loadScenarioResults">
-                <el-option
-                  v-for="scenario in scenarios"
-                  :key="scenario"
-                  :label="scenario"
-                  :value="scenario">
-                </el-option>
-              </el-select>
-            </div>
+        <el-card class="data-card" shadow="hover">
+          <div slot="header" class="card-header">
+            <span class="card-title">预测数据详情</span>
+            <el-select v-model="selectedScenario" placeholder="选择情景" size="small" @change="loadScenarioResults">
+              <el-option v-for="scenario in scenarios" :key="scenario" :label="scenario" :value="scenario"></el-option>
+            </el-select>
           </div>
-          <div v-if="loadingData" class="loading-container">
-            <i class="el-icon-loading"></i>
-            <p>加载中...</p>
-          </div>
-          <div v-else-if="dataError" class="error-container">
-            <i class="el-icon-warning"></i>
-            <p>{{ dataError }}</p>
-          </div>
-          <div v-else>
-            <el-table
-              v-if="scenarioResults.length > 0"
-              :data="scenarioResults"
-              style="width: 100%"
-              height="400"
-              border>
-              <el-table-column
-                prop="year"
-                label="年份"
-                width="100"
-                fixed="left">
-              </el-table-column>
-              <el-table-column
-                prop="data_type"
-                label="数据类型"
-                width="100"
-                fixed="left">
-                <template slot-scope="scope">
-                  <el-tag :type="scope.row.data_type === 'historical' ? 'info' : 'success'" size="small">
-                    {{ scope.row.data_type === 'historical' ? '历史' : '预测' }}
-                  </el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column
-                prop="energy_consumption"
-                label="综合能源消费量(万吨标准煤)"
-                width="200">
-                <template slot-scope="scope">
-                  {{ scope.row.energy_consumption ? scope.row.energy_consumption.toFixed(2) : 'N/A' }}
-                </template>
-              </el-table-column>
-              <el-table-column
-                prop="gdp"
-                label="工业总产值(现价)(万元)"
-                width="200">
-                <template slot-scope="scope">
-                  {{ scope.row.gdp ? scope.row.gdp.toFixed(2) : 'N/A' }}
-                </template>
-              </el-table-column>
-              <el-table-column
-                prop="co2_emission"
-                label="二氧化碳排放量合计(万吨二氧化碳当量)"
-                width="280">
-                <template slot-scope="scope">
-                  {{ scope.row.co2_emission ? scope.row.co2_emission.toFixed(2) : 'N/A' }}
-                </template>
-              </el-table-column>
-            </el-table>
-            <div v-else class="empty-data">
-              <i class="el-icon-info"></i>
-              <p>暂无预测数据，请先运行预测</p>
-            </div>
+          <el-table v-if="scenarioResults.length > 0" :data="scenarioResults" style="width: 100%" height="400" border stripe>
+            <el-table-column prop="year" label="年份" width="80" fixed="left" align="center"></el-table-column>
+            <el-table-column prop="data_type" label="类型" width="80" align="center">
+              <template slot-scope="scope">
+                <el-tag :type="scope.row.data_type === 'historical' ? 'info' : 'success'" size="mini">
+                  {{ scope.row.data_type === 'historical' ? '历史' : '预测' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="gdp" label="GDP(万元)" min-width="140" align="right">
+              <template slot-scope="scope">{{ formatNumber(scope.row.gdp) }}</template>
+            </el-table-column>
+            <el-table-column prop="energy_consumption" label="能源消费(万吨标煤)" min-width="150" align="right">
+              <template slot-scope="scope">{{ formatNumber(scope.row.energy_consumption) }}</template>
+            </el-table-column>
+            <el-table-column prop="co2_emission" label="CO2排放(万吨)" min-width="130" align="right">
+              <template slot-scope="scope">{{ formatNumber(scope.row.co2_emission) }}</template>
+            </el-table-column>
+          </el-table>
+          <div v-else class="empty-data">
+            <i class="el-icon-info"></i>
+            <p>暂无预测数据，请先运行预测</p>
           </div>
         </el-card>
       </el-col>
     </el-row>
-    
-    <el-row style="margin-top: 20px;">
+
+    <el-row style="margin-top: 24px;">
       <el-col :span="24" style="text-align: center;">
-        <el-button type="primary" @click="downloadResults">下载预测结果</el-button>
-        <el-button type="success" @click="saveCharts">导出图表</el-button>
-        <el-button @click="goToScenarios">返回情景设置</el-button>
+        <el-button type="primary" icon="el-icon-download" @click="downloadResults">下载预测结果</el-button>
+        <el-button type="success" icon="el-icon-picture" @click="saveCharts">导出图表</el-button>
+        <el-button icon="el-icon-back" @click="goToScenarios">返回情景设置</el-button>
       </el-col>
     </el-row>
   </div>
@@ -157,8 +111,27 @@
 import axios from 'axios'
 import * as echarts from 'echarts'
 
+const COLORS = {
+  coal: '#6B7280',
+  renewable: '#10B981',
+  other: '#F59E0B',
+  historical: '#64748B'
+}
+
+const SCENARIO_COLORS = ['#1E40AF', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899']
+
+function hasArray(data, key) {
+  return data && Array.isArray(data[key]) && data[key].length > 0
+}
+
 export default {
   name: 'PredictionResults',
+  props: {
+    isActive: {
+      type: Boolean,
+      default: false
+    }
+  },
   data() {
     return {
       loading: true,
@@ -166,23 +139,27 @@ export default {
       chartData: {},
       carbonPeakChart: null,
       gdpChart: null,
-      energyConsumptionChart: null,
+      energyChart: null,
       scenarios: [],
       selectedScenario: '',
       scenarioResults: [],
-      loadingData: false,
-      dataError: null,
-      forecastYears: 30
+      energyChartType: 'stack',
+      peakSummaries: []
     }
   },
   watch: {
-    // 监听父组件的activeTab变化
-    '$parent.$parent.activeTab'(newTab) {
-      if (newTab === 'results') {
+    energyChartType() {
+      this.initEnergyChart()
+    },
+    isActive(active) {
+      if (active && !this.loading && !this.error) {
         this.$nextTick(() => {
           setTimeout(() => {
-            this.forceResizeCharts()
-          }, 200)
+            this.initCarbonPeakChart()
+            this.initGdpChart()
+            this.initEnergyChart()
+            this.handleResize()
+          }, 120)
         })
       }
     }
@@ -190,769 +167,362 @@ export default {
   created() {
     this.checkPredictionStatus()
   },
-  activated() {
-    // 当组件被激活时（比如从其他tab切换过来），重新检查预测状态
-    this.checkPredictionStatus()
-
-    // 强制resize图表
-    this.$nextTick(() => {
-      this.forceResizeCharts()
-    })
-  },
   mounted() {
-    // 组件挂载后，监听窗口大小变化
-    this.handleResize = () => {
-      if (this.carbonPeakChart) {
-        this.carbonPeakChart.resize()
-      }
-      if (this.gdpChart) {
-        this.gdpChart.resize()
-      }
-      if (this.energyConsumptionChart) {
-        this.energyConsumptionChart.resize()
-      }
-    }
     window.addEventListener('resize', this.handleResize)
-
-    // 监听页面可见性变化
-    this.handleVisibilityChange = () => {
-      if (!document.hidden) {
-        setTimeout(() => {
-          this.forceResizeCharts()
-        }, 100)
-      }
-    }
-    document.addEventListener('visibilitychange', this.handleVisibilityChange)
-
-    // 监听tab切换
-    this.handleTabChange = () => {
-      setTimeout(() => {
-        this.forceResizeCharts()
-      }, 100)
-    }
-
-    // 使用ResizeObserver监听容器尺寸变化
-    if (window.ResizeObserver) {
-      this.resizeObserver = new ResizeObserver(() => {
-        this.forceResizeCharts()
-      })
-    }
-
-    // 使用IntersectionObserver监听容器可见性
-    if (window.IntersectionObserver) {
-      this.intersectionObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            setTimeout(() => {
-              this.forceResizeCharts()
-            }, 100)
-          }
-        })
-      }, { threshold: 0.1 })
+    if (this.isActive) {
+      setTimeout(() => this.handleResize(), 120)
     }
   },
   beforeDestroy() {
-    // 组件销毁前，移除事件监听器
-    if (this.handleResize) {
-      window.removeEventListener('resize', this.handleResize)
-    }
-    if (this.handleVisibilityChange) {
-      document.removeEventListener('visibilitychange', this.handleVisibilityChange)
-    }
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect()
-    }
-    if (this.intersectionObserver) {
-      this.intersectionObserver.disconnect()
-    }
-    // 销毁图表实例
-    if (this.carbonPeakChart) {
-      this.carbonPeakChart.dispose()
-    }
-    if (this.gdpChart) {
-      this.gdpChart.dispose()
-    }
-    if (this.energyConsumptionChart) {
-      this.energyConsumptionChart.dispose()
-    }
+    window.removeEventListener('resize', this.handleResize)
+    ;[this.carbonPeakChart, this.gdpChart, this.energyChart].forEach(c => {
+      if (c) c.dispose()
+    })
   },
   methods: {
+    normalizeYear(value) {
+      const num = Number(value)
+      return Number.isFinite(num) ? num : null
+    },
+    collectYearLabels(keys, includeHistorical = true) {
+      const years = new Set()
+      keys.forEach(name => {
+        const item = this.chartData[name]
+        if (!item) return
+        if (includeHistorical && Array.isArray(item.historical_years)) {
+          item.historical_years.forEach(y => {
+            const year = this.normalizeYear(y)
+            if (year !== null) years.add(year)
+          })
+        }
+        if (Array.isArray(item.years)) {
+          item.years.forEach(y => {
+            const year = this.normalizeYear(y)
+            if (year !== null) years.add(year)
+          })
+        }
+      })
+      return Array.from(years).sort((a, b) => a - b)
+    },
+    buildAlignedSeries(labels, years, values) {
+      const valueMap = new Map()
+      ;(years || []).forEach((year, index) => {
+        const key = this.normalizeYear(year)
+        if (key !== null) {
+          const val = values && values[index] !== undefined ? Number(values[index]) : null
+          valueMap.set(key, Number.isFinite(val) ? val : null)
+        }
+      })
+      return labels.map(label => (valueMap.has(label) ? valueMap.get(label) : null))
+    },
     checkPredictionStatus() {
       this.loading = true
       this.error = null
-      
-      // 检查是否已有预测结果
       axios.post('/api/predict/status')
         .then(response => {
           this.scenarios = response.data.scenarios || []
-          if (this.scenarios.length > 0) {
-            this.selectedScenario = this.scenarios[0]
-            this.loadScenarioResults()
-            this.loadChartData()
-          } else {
-            // 如果没有预测结果，自动运行预测
+          if (this.scenarios.length === 0) {
             this.runAutoPrediction()
+            return
           }
+          this.selectedScenario = this.scenarios[0]
+          this.loadScenarioResults()
+          this.loadChartData()
         })
-        .catch(error => {
-          console.error('检查预测状态失败:', error)
-          // 如果检查失败，尝试自动运行预测
+        .catch(() => {
           this.runAutoPrediction()
         })
     },
     loadChartData() {
       axios.get('/api/chart-data')
         .then(response => {
-          // 验证响应数据是否为对象
-          if (typeof response.data === 'string') {
-            console.error('API returned string instead of object:', response.data.substring(0, 100))
-            this.error = 'API返回数据格式错误'
+          if (!response.data || response.data.error) {
+            this.error = (response.data && response.data.error) || '图表数据为空'
             this.loading = false
             return
           }
-          
-          if (response.data && response.data.error) {
-            this.error = response.data.error
-            this.loading = false
-            return
-          }
-          
-          this.chartData = response.data || {}
-          console.log('Chart data loaded:', this.chartData)
+
+          this.chartData = response.data
           this.loading = false
-          
-          if (Object.keys(this.chartData).length > 0) {
-            // 在DOM更新后初始化图表
-            this.$nextTick(() => {
-              try {
-                this.initCarbonPeakChart()
-              } catch (e) {
-                console.error('Carbon peak chart init failed:', e)
-              }
-              
-              try {
-                this.initGdpChart()
-              } catch (e) {
-                console.error('GDP chart init failed:', e)
-              }
-              
-              try {
-                this.initEnergyConsumptionChart()
-              } catch (e) {
-                console.error('Energy consumption chart init failed:', e)
-              }
+          this.calculatePeakSummaries()
 
-              // 使用多个延时确保图表正确显示
-              setTimeout(() => {
-                this.forceResizeCharts()
-              }, 100)
-
-              setTimeout(() => {
-                this.forceResizeCharts()
-              }, 300)
-
-              setTimeout(() => {
-                this.forceResizeCharts()
-                // 启动ResizeObserver
-                this.startResizeObserver()
-              }, 500)
-            })
-          }
+          this.$nextTick(() => {
+            this.initCarbonPeakChart()
+            this.initGdpChart()
+            this.initEnergyChart()
+          })
         })
-        .catch(error => {
-          console.error('加载图表数据失败:', error)
-          this.error = '加载图表数据失败，请检查后端服务是否正常运行'
+        .catch(() => {
+          this.error = '加载图表数据失败'
           this.loading = false
         })
     },
+    calculatePeakSummaries() {
+      this.peakSummaries = []
+      Object.keys(this.chartData).forEach((name, index) => {
+        const item = this.chartData[name]
+        if (item && item.peak) {
+          this.peakSummaries.push({
+            name,
+            year: item.peak.year,
+            type: index === 0 ? 'success' : index === 1 ? 'primary' : 'warning'
+          })
+        }
+      })
+    },
     initCarbonPeakChart() {
-      // 初始化碳排放达峰图表
-      const chartDom = document.getElementById('carbon-peak-chart')
-      if (!chartDom) {
-        console.error('Chart container not found')
-        return
-      }
+      const dom = document.getElementById('carbon-peak-chart')
+      if (!dom) return
 
-      // 确保容器有尺寸
-      if (chartDom.offsetWidth === 0 || chartDom.offsetHeight === 0) {
-        console.warn('Chart container has no size, retrying...')
-        setTimeout(() => this.initCarbonPeakChart(), 100)
-        return
-      }
+      if (this.carbonPeakChart) this.carbonPeakChart.dispose()
+      this.carbonPeakChart = echarts.init(dom)
 
-      this.carbonPeakChart = echarts.init(chartDom)
-      
-      // 准备图表数据
+      const scenarioKeys = Object.keys(this.chartData)
+      const yearLabels = this.collectYearLabels(scenarioKeys, true)
       const series = []
-      const markPoints = []
-      
-      // 添加历史数据系列（只添加一次）
-      const firstScenario = Object.keys(this.chartData)[0]
-      if (firstScenario && this.chartData[firstScenario].historical_years && 
-          this.chartData[firstScenario].historical_years.length > 0 &&
-          this.chartData[firstScenario].emissions) {
-        const historicalYears = this.chartData[firstScenario].historical_years
-        const historicalEmissions = this.chartData[firstScenario].historical_emissions || []
-        
+      const firstScenario = scenarioKeys[0]
+      const firstData = firstScenario ? this.chartData[firstScenario] : null
+
+      if (firstData && hasArray(firstData, 'historical_years') && hasArray(firstData, 'historical_emissions')) {
         series.push({
           name: '历史数据',
           type: 'line',
-          data: historicalYears.map((year, i) => [year, historicalEmissions[i]]),
-          lineStyle: {
-            width: 2.5,
-            type: 'dashed',
-            color: '#333333'
-          },
-          symbol: 'rect',
-          symbolSize: 6,
-          itemStyle: {
-            color: '#333333'
-          },
-          z: 10  // 确保在最上层
+          data: this.buildAlignedSeries(yearLabels, firstData.historical_years, firstData.historical_emissions),
+          lineStyle: { width: 2, type: 'dashed', color: COLORS.historical },
+          symbolSize: 5,
+          connectNulls: false
         })
       }
-      
-      // 为每个情景添加一条线和一个标记点
-      Object.keys(this.chartData).forEach((scenarioName, index) => {
-        const data = this.chartData[scenarioName]
-        if (!data || !data.years || !data.emissions || !data.peak) {
-          console.warn(`Incomplete data for scenario: ${scenarioName}`)
-          return
-        }
-        const years = data.years
-        const emissions = data.emissions
-        const peak = data.peak
-        
-        // 线数据
+
+      scenarioKeys.forEach((name, index) => {
+        const item = this.chartData[name]
+        if (!item || !hasArray(item, 'years') || !hasArray(item, 'emissions')) return
         series.push({
-          name: scenarioName,
+          name,
           type: 'line',
-          data: years.map((year, i) => [year, emissions[i]]),
           smooth: true,
-          lineStyle: {
-            width: 3
-          },
-          symbol: 'circle',
-          symbolSize: 8,
-          emphasis: {
-            focus: 'series',
-            scale: true,
-            lineStyle: {
-              width: 4
-            }
-          }
-        })
-        
-        // 峰值点标记
-        markPoints.push({
-          name: `${scenarioName}峰值`,
-          coord: [peak.year, peak.value],
-          value: `${peak.year}年: ${peak.value.toFixed(2)}万吨`,
-          itemStyle: {
-            color: this.getColorByIndex(index)
-          }
+          data: this.buildAlignedSeries(yearLabels, item.years, item.emissions),
+          lineStyle: { width: 3, color: SCENARIO_COLORS[index % SCENARIO_COLORS.length] },
+          symbolSize: 5,
+          connectNulls: false
         })
       })
-      
-      // 图表选项
-      const legendNames = series.map(s => s.name)
-      const option = {
-        title: {
-          text: '碳排放达峰预测',
-          left: 'center',
-          top: 10,
-          textStyle: {
-            fontSize: 18,
-            fontWeight: 'bold'
-          }
-        },
-        tooltip: {
-          trigger: 'axis',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          borderColor: '#ccc',
-          borderWidth: 1,
-          textStyle: {
-            color: '#333'
-          },
-          formatter: function(params) {
-            const year = params[0].value[0]
-            let result = `<div style="font-weight:bold;margin-bottom:5px;">${year}年</div>`
-            
-            params.forEach(param => {
-              const scenarioName = param.seriesName
-              const emission = param.value[1].toFixed(2)
-              const color = param.color
-              result += `<div style="display:flex;align-items:center;margin:3px 0">
-                <span style="display:inline-block;width:10px;height:10px;background:${color};margin-right:6px;border-radius:50%"></span>
-                <span style="margin-right:8px;">${scenarioName}:</span>
-                <span style="font-weight:bold">${emission}万吨</span>
-              </div>`
-            })
-            
-            return result
-          },
-          axisPointer: {
-            type: 'cross',
-            lineStyle: {
-              color: '#aaa',
-              width: 1,
-              type: 'dashed'
-            }
-          }
-        },
-        legend: {
-          data: legendNames,
-          bottom: 10,
-          icon: 'roundRect',
-          itemWidth: 12,
-          itemHeight: 12,
-          textStyle: {
-            fontSize: 12
-          }
-        },
-        grid: {
-          left: '5%',
-          right: '5%',
-          top: '15%',
-          bottom: '15%',
-          containLabel: true
-        },
-        xAxis: {
-          type: 'value',
-          name: '年份',
-          nameLocation: 'middle',
-          nameGap: 30,
-          nameTextStyle: {
-            fontWeight: 'bold'
-          },
-          min: 2019,
-          max: 2060,
-          minorTick: {
-            show: true
-          },
-          minorSplitLine: {
-            show: true,
-            lineStyle: {
-              color: '#f5f5f5'
-            }
-          },
-          axisLabel: {
-            formatter: '{value}',
-            fontWeight: 'bold'
-          },
-          axisLine: {
-            lineStyle: {
-              color: '#333'
-            }
-          },
-          splitLine: {
-            lineStyle: {
-              color: '#eee'
-            }
-          }
-        },
-        yAxis: {
-          type: 'value',
-          name: '碳排放量(万吨)',
-          nameLocation: 'middle',
-          nameGap: 50,
-          nameTextStyle: {
-            fontWeight: 'bold'
-          },
-          axisLabel: {
-            formatter: '{value}',
-            fontWeight: 'bold'
-          },
-          axisLine: {
-            lineStyle: {
-              color: '#333'
-            }
-          },
-          splitLine: {
-            lineStyle: {
-              color: '#eee'
-            }
-          }
-        },
-        series: series.map((serie, index) => {
-          // 历史数据系列不需要markPoint
-          if (serie.name === '历史数据') {
-            return serie;
-          }
-          
-          // 计算markPoint的正确索引（考虑历史数据系列）
-          const hasHistorical = series[0] && series[0].name === '历史数据';
-          const markPointIndex = hasHistorical ? index - 1 : index;
-          
-          if (markPointIndex < 0 || markPointIndex >= markPoints.length) {
-            return serie;
-          }
-          
-          return {
-            ...serie,
-            markPoint: {
-              data: [markPoints[markPointIndex]],
-              symbol: 'pin',
-              symbolSize: 60,
-              itemStyle: {
-                shadowColor: 'rgba(0, 0, 0, 0.3)',
-                shadowBlur: 10,
-                shadowOffsetX: 2,
-                shadowOffsetY: 2
-              },
-              label: {
-                formatter: function(params) {
-                  return `${params.data.coord[0]}年`;
-                },
-                position: 'top',
-                fontSize: 12,
-                fontWeight: 'bold'
-              },
-              emphasis: {
-                label: {
-                  formatter: '{c}',
-                  show: true,
-                  fontSize: 12
-                },
-                itemStyle: {
-                  shadowBlur: 20
-                }
-              }
-            },
-            markLine: {
-              silent: true,
-              lineStyle: {
-                color: this.getColorByIndex(markPointIndex),
-                type: 'dashed',
-                opacity: 0.5
-              },
-              data: [
-                {
-                  xAxis: markPoints[markPointIndex].coord[0],
-                  label: {
-                    formatter: function(params) {
-                      return `${params.value}年`;
-                    },
-                    position: 'end'
-                  }
-                }
-              ]
-            }
-          };
-        })
-      }
-      
-      // 设置图表选项
-      this.carbonPeakChart.setOption(option)
 
-      // 初始化后立即调用resize确保图表正确显示
-      this.$nextTick(() => {
-        if (this.carbonPeakChart) {
-          this.carbonPeakChart.resize()
-        }
+      this.carbonPeakChart.setOption({
+        title: { text: '碳排放达峰预测', left: 'center' },
+        tooltip: { trigger: 'axis' },
+        legend: { type: 'scroll', top: 30 },
+        grid: { left: '8%', right: '4%', top: '22%', bottom: '12%', containLabel: true },
+        xAxis: { type: 'category', name: '年份', data: yearLabels, boundaryGap: false, axisLabel: { rotate: 35 } },
+        yAxis: { type: 'value', name: '碳排放量(万吨CO2)' },
+        series
       })
-
-      setTimeout(() => {
-        if (this.carbonPeakChart) {
-          this.carbonPeakChart.resize()
-        }
-      }, 100)
-
-      setTimeout(() => {
-        if (this.carbonPeakChart) {
-          this.carbonPeakChart.resize()
-        }
-      }, 300)
     },
     initGdpChart() {
-      const chartDom = document.getElementById('gdp-chart')
-      if (!chartDom) {
-        console.error('GDP chart container not found')
-        return
-      }
+      const dom = document.getElementById('gdp-chart')
+      if (!dom) return
 
-      if (chartDom.offsetWidth === 0 || chartDom.offsetHeight === 0) {
-        console.warn('GDP chart container has no size, retrying...')
-        setTimeout(() => this.initGdpChart(), 100)
-        return
-      }
+      if (this.gdpChart) this.gdpChart.dispose()
+      this.gdpChart = echarts.init(dom)
 
-      this.gdpChart = echarts.init(chartDom)
-      
-      // 准备图表数据
+      const scenarioKeys = Object.keys(this.chartData)
+      const yearLabels = this.collectYearLabels(scenarioKeys, true)
       const series = []
-      
-      // 添加历史数据系列
-      const firstScenario = Object.keys(this.chartData)[0]
-      if (firstScenario && this.chartData[firstScenario].historical_years && 
-          this.chartData[firstScenario].historical_years.length > 0 &&
-          this.chartData[firstScenario].gdp) {
-        const historicalYears = this.chartData[firstScenario].historical_years
-        const historicalGdp = this.chartData[firstScenario].historical_gdp || []
-        
-        if (historicalGdp.length > 0) {
-          series.push({
-            name: '历史数据',
-            type: 'line',
-            data: historicalYears.map((year, i) => [year, historicalGdp[i]]),
-            lineStyle: {
-              width: 2.5,
-              type: 'dashed',
-              color: '#333333'
-            },
-            symbol: 'rect',
-            symbolSize: 6,
-            itemStyle: {
-              color: '#333333'
-            },
-            z: 10
-          })
-        }
-      }
-      
-      Object.keys(this.chartData).forEach((scenarioName) => {
-        const data = this.chartData[scenarioName]
-        if (!data || !data.years) {
-          console.warn(`Incomplete data for scenario: ${scenarioName}`)
-          return
-        }
-        const years = data.years
-        const gdpData = data.gdp || []
-        
-        if (gdpData.length > 0) {
-          series.push({
-            name: scenarioName,
-            type: 'line',
-            data: years.map((year, i) => [year, gdpData[i] || 0]),
-            smooth: true,
-            lineStyle: { width: 3 },
-            symbol: 'circle',
-            symbolSize: 8
-          })
-        }
-      })
-      
-      const legendNames = series.map(s => s.name)
-      const option = {
-        title: {
-          text: '工业生产总值预测',
-          left: 'center',
-          textStyle: { fontSize: 16, fontWeight: 'bold' }
-        },
-        tooltip: {
-          trigger: 'axis',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          borderColor: '#ccc',
-          borderWidth: 1
-        },
-        legend: {
-          data: legendNames,
-          bottom: 10
-        },
-        grid: { left: '10%', right: '5%', top: '15%', bottom: '15%', containLabel: true },
-        xAxis: {
-          type: 'value',
-          name: '年份',
-          nameLocation: 'middle',
-          nameGap: 30,
-          min: 2019,
-          max: 2060
-        },
-        yAxis: {
-          type: 'value',
-          name: '工业总产值(万元)',
-          nameLocation: 'middle',
-          nameGap: 50
-        },
-        series: series
-      }
-      
-      this.gdpChart.setOption(option)
-      this.$nextTick(() => {
-        if (this.gdpChart) this.gdpChart.resize()
-      })
-    },
-    initEnergyConsumptionChart() {
-      const chartDom = document.getElementById('energy-consumption-chart')
-      if (!chartDom) {
-        console.error('Energy consumption chart container not found')
-        return
-      }
+      const firstScenario = scenarioKeys[0]
+      const firstData = firstScenario ? this.chartData[firstScenario] : null
 
-      if (chartDom.offsetWidth === 0 || chartDom.offsetHeight === 0) {
-        console.warn('Energy consumption chart container has no size, retrying...')
-        setTimeout(() => this.initEnergyConsumptionChart(), 100)
-        return
-      }
-
-      this.energyConsumptionChart = echarts.init(chartDom)
-      
-      const series = []
-      
-      // 添加历史数据系列
-      const firstScenario = Object.keys(this.chartData)[0]
-      if (firstScenario && this.chartData[firstScenario].historical_years && 
-          this.chartData[firstScenario].historical_years.length > 0 &&
-          this.chartData[firstScenario].energy_mix && 
-          this.chartData[firstScenario].energy_mix.total) {
-        const historicalYears = this.chartData[firstScenario].historical_years
-        const historicalEnergy = this.chartData[firstScenario].historical_energy || []
-        
-        if (historicalEnergy.length > 0) {
-          series.push({
-            name: '历史数据',
-            type: 'line',
-            data: historicalYears.map((year, i) => [year, historicalEnergy[i]]),
-            lineStyle: {
-              width: 2.5,
-              type: 'dashed',
-              color: '#333333'
-            },
-            symbol: 'rect',
-            symbolSize: 6,
-            itemStyle: {
-              color: '#333333'
-            },
-            z: 10
-          })
-        }
-      }
-      
-      Object.keys(this.chartData).forEach((scenarioName) => {
-        const data = this.chartData[scenarioName]
-        if (!data || !data.years) {
-          console.warn(`Incomplete data for scenario: ${scenarioName}`)
-          return
-        }
-        const years = data.years
-        const energyData = data.energy_mix && data.energy_mix.total ? data.energy_mix.total : years.map(() => 0)
-        
+      if (firstData && hasArray(firstData, 'historical_years') && hasArray(firstData, 'historical_gdp')) {
         series.push({
-          name: scenarioName,
+          name: '历史数据',
           type: 'line',
-          data: years.map((year, i) => [year, energyData[i] || 0]),
+          data: this.buildAlignedSeries(yearLabels, firstData.historical_years, firstData.historical_gdp),
+          lineStyle: { width: 2, type: 'dashed', color: COLORS.historical },
+          symbolSize: 5,
+          connectNulls: false
+        })
+      }
+
+      scenarioKeys.forEach((name, index) => {
+        const item = this.chartData[name]
+        if (!item || !hasArray(item, 'years') || !hasArray(item, 'gdp')) return
+        series.push({
+          name,
+          type: 'line',
           smooth: true,
-          lineStyle: { width: 3 },
-          symbol: 'circle',
-          symbolSize: 8
+          data: this.buildAlignedSeries(yearLabels, item.years, item.gdp),
+          lineStyle: { width: 3, color: SCENARIO_COLORS[index % SCENARIO_COLORS.length] },
+          symbolSize: 5,
+          connectNulls: false
         })
       })
-      
-      const legendNames = series.map(s => s.name)
-      const option = {
-        title: {
-          text: '综合能源消费量预测',
-          left: 'center',
-          textStyle: { fontSize: 16, fontWeight: 'bold' }
-        },
-        tooltip: {
-          trigger: 'axis',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          borderColor: '#ccc',
-          borderWidth: 1
-        },
-        legend: {
-          data: legendNames,
-          bottom: 10
-        },
-        grid: { left: '10%', right: '5%', top: '15%', bottom: '15%', containLabel: true },
-        xAxis: {
-          type: 'value',
-          name: '年份',
-          nameLocation: 'middle',
-          nameGap: 30,
-          min: 2019,
-          max: 2060
-        },
-        yAxis: {
-          type: 'value',
-          name: '综合能源消赹量(万吨标准煤)',
-          nameLocation: 'middle',
-          nameGap: 50
-        },
-        series: series
-      }
-      
-      this.energyConsumptionChart.setOption(option)
-      this.$nextTick(() => {
-        if (this.energyConsumptionChart) this.energyConsumptionChart.resize()
+
+      this.gdpChart.setOption({
+        title: { text: 'GDP预测', left: 'center' },
+        tooltip: { trigger: 'axis' },
+        legend: { type: 'scroll', top: 30 },
+        grid: { left: '10%', right: '4%', top: '22%', bottom: '12%', containLabel: true },
+        xAxis: { type: 'category', name: '年份', data: yearLabels, boundaryGap: false, axisLabel: { rotate: 35 } },
+        yAxis: { type: 'value', name: 'GDP(万元)' },
+        series
       })
     },
-    getColorByIndex(index) {
-      // 预定义一组颜色
-      const colors = [
-        '#409EFF', // 蓝色
-        '#67C23A', // 绿色
-        '#E6A23C', // 橙色
-        '#F56C6C', // 红色
-        '#909399', // 灰色
-        '#9966CC', // 紫色
-        '#00CCFF', // 天蓝
-        '#FF9900'  // 橙黄
+    initEnergyChart() {
+      const dom = document.getElementById('energy-chart')
+      if (!dom) return
+
+      if (this.energyChart) this.energyChart.dispose()
+      this.energyChart = echarts.init(dom)
+
+      if (this.energyChartType === 'stack') {
+        this.initEnergyStackChart()
+      } else {
+        this.initEnergyLineChart()
+      }
+    },
+    initEnergyStackChart() {
+      const firstScenario = Object.keys(this.chartData)[0]
+      if (!firstScenario) return
+
+      const data = this.chartData[firstScenario] || {}
+      const years = data.years || []
+      const historicalYears = data.historical_years || []
+      const allYears = historicalYears.concat(years).filter((v, i, a) => a.indexOf(v) === i).sort((a, b) => a - b)
+
+      const historicalEnergy = data.historical_energy || []
+      const mix = data.energy_mix || {}
+      const renewableData = mix.renewable || []
+      const coalData = mix.coal || []
+      const otherData = mix.other_fossil || []
+
+      const series = [
+        {
+          name: '煤炭',
+          type: 'bar',
+          stack: 'total',
+          data: allYears.map(year => {
+            const histIdx = historicalYears.indexOf(year)
+            if (histIdx >= 0) return (historicalEnergy[histIdx] || 0) * 0.75
+            const foreIdx = years.indexOf(year)
+            return foreIdx >= 0 ? (coalData[foreIdx] || 0) : 0
+          }),
+          itemStyle: { color: COLORS.coal }
+        },
+        {
+          name: '其他化石能源',
+          type: 'bar',
+          stack: 'total',
+          data: allYears.map(year => {
+            const histIdx = historicalYears.indexOf(year)
+            if (histIdx >= 0) return (historicalEnergy[histIdx] || 0) * 0.20
+            const foreIdx = years.indexOf(year)
+            return foreIdx >= 0 ? (otherData[foreIdx] || 0) : 0
+          }),
+          itemStyle: { color: COLORS.other }
+        },
+        {
+          name: '可再生能源',
+          type: 'bar',
+          stack: 'total',
+          data: allYears.map(year => {
+            const histIdx = historicalYears.indexOf(year)
+            if (histIdx >= 0) return (historicalEnergy[histIdx] || 0) * 0.05
+            const foreIdx = years.indexOf(year)
+            return foreIdx >= 0 ? (renewableData[foreIdx] || 0) : 0
+          }),
+          itemStyle: { color: COLORS.renewable }
+        }
       ]
-      return colors[index % colors.length]
+
+      this.energyChart.setOption({
+        title: { text: `能源消费结构（${firstScenario}）`, left: 'center' },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        legend: { bottom: 0 },
+        grid: { left: '10%', right: '6%', top: '16%', bottom: '18%', containLabel: true },
+        xAxis: { type: 'category', data: allYears, axisLabel: { rotate: 45 } },
+        yAxis: { type: 'value', name: '能源消费(万吨标煤)' },
+        series
+      })
+    },
+    initEnergyLineChart() {
+      const scenarioKeys = Object.keys(this.chartData)
+      const yearLabels = this.collectYearLabels(scenarioKeys, true)
+      const series = []
+      const firstScenario = scenarioKeys[0]
+      const firstData = firstScenario ? this.chartData[firstScenario] : null
+
+      if (firstData && hasArray(firstData, 'historical_years') && hasArray(firstData, 'historical_energy')) {
+        series.push({
+          name: '历史数据',
+          type: 'line',
+          data: this.buildAlignedSeries(yearLabels, firstData.historical_years, firstData.historical_energy),
+          lineStyle: { width: 2, type: 'dashed', color: COLORS.historical },
+          symbolSize: 5,
+          connectNulls: false
+        })
+      }
+
+      scenarioKeys.forEach((name, index) => {
+        const item = this.chartData[name]
+        if (!item || !hasArray(item, 'years')) return
+        const mix = item.energy_mix || {}
+        const totals = mix.total || []
+        series.push({
+          name,
+          type: 'line',
+          smooth: true,
+          data: this.buildAlignedSeries(yearLabels, item.years, totals),
+          lineStyle: { width: 3, color: SCENARIO_COLORS[index % SCENARIO_COLORS.length] },
+          symbolSize: 5,
+          connectNulls: false
+        })
+      })
+
+      this.energyChart.setOption({
+        title: { text: '综合能源消费预测', left: 'center' },
+        tooltip: { trigger: 'axis' },
+        legend: { type: 'scroll', top: 30 },
+        grid: { left: '10%', right: '4%', top: '22%', bottom: '12%', containLabel: true },
+        xAxis: { type: 'category', name: '年份', data: yearLabels, boundaryGap: false, axisLabel: { rotate: 35 } },
+        yAxis: { type: 'value', name: '能源消费(万吨标煤)' },
+        series
+      })
     },
     runAutoPrediction() {
       this.loading = true
       this.error = null
-      
-      // 先获取所有情景
+
       axios.get('/api/scenarios')
         .then(response => {
-          const scenarios = Object.keys(response.data)
+          const scenarios = Object.keys(response.data || {})
           if (scenarios.length === 0) {
-            // 如果没有情景，显示错误信息
             this.loading = false
             this.error = '没有可用的预测情景，请先创建情景'
             return
           }
-          
-          // 使用所有情景运行预测
-          const loadingInstance = this.$loading({
-            lock: true,
-            text: '正在运行预测，请稍候...',
-            spinner: 'el-icon-loading',
-            background: 'rgba(0, 0, 0, 0.7)'
-          })
-          
-          axios.post('/api/predict', {
-            scenarios: scenarios,
-            forecast_years: this.forecastYears
-          })
+
+          axios.post('/api/predict', { scenarios, forecast_years: 36 })
             .then(() => {
-              loadingInstance.close()
               this.$message.success('预测完成')
-              // 重新加载结果
               this.checkPredictionStatus()
             })
-            .catch(error => {
-              loadingInstance.close()
-              console.error('预测失败:', error)
+            .catch(() => {
               this.loading = false
-              this.error = '预测失败，请检查后端服务是否正常运行'
+              this.error = '预测失败'
             })
         })
-        .catch(error => {
-          console.error('获取情景失败:', error)
+        .catch(() => {
           this.loading = false
-          this.error = '获取情景失败，请检查后端服务是否正常运行'
+          this.error = '获取情景失败'
         })
     },
     loadScenarioResults() {
       if (!this.selectedScenario) return
-      
-      this.loadingData = true
-      this.dataError = null
-      
       axios.get(`/api/results/${this.selectedScenario}`)
         .then(response => {
-          this.scenarioResults = response.data
-          this.loadingData = false
+          this.scenarioResults = response.data || []
         })
-        .catch(error => {
-          console.error('加载情景数据失败:', error)
-          this.dataError = '加载情景数据失败'
-          this.loadingData = false
+        .catch(() => {
+          this.scenarioResults = []
         })
     },
     downloadResults() {
@@ -960,8 +530,6 @@ export default {
         this.$message.warning('请先选择一个情景')
         return
       }
-
-      // 创建下载链接
       const link = document.createElement('a')
       link.href = `/api/results/${this.selectedScenario}/download`
       link.download = `${this.selectedScenario}_预测结果.csv`
@@ -969,124 +537,27 @@ export default {
       link.click()
       document.body.removeChild(link)
     },
-    forceResizeCharts() {
-      // 强制resize所有图表
-      const resizeChart = (chart) => {
-        if (chart) {
-          try {
-            chart.resize()
-          } catch (e) {
-            console.warn('Chart resize failed:', e)
-          }
-        }
-      }
-
-      // 立即resize
-      resizeChart(this.carbonPeakChart)
-      resizeChart(this.gdpChart)
-      resizeChart(this.energyConsumptionChart)
-
-      // 延时resize
-      setTimeout(() => {
-        resizeChart(this.carbonPeakChart)
-        resizeChart(this.gdpChart)
-        resizeChart(this.energyConsumptionChart)
-      }, 100)
-
-      setTimeout(() => {
-        resizeChart(this.carbonPeakChart)
-        resizeChart(this.gdpChart)
-        resizeChart(this.energyConsumptionChart)
-      }, 300)
-
-      setTimeout(() => {
-        resizeChart(this.carbonPeakChart)
-        resizeChart(this.gdpChart)
-        resizeChart(this.energyConsumptionChart)
-      }, 500)
-    },
-    startResizeObserver() {
-      if (this.resizeObserver) {
-        const carbonContainer = document.getElementById('carbon-peak-chart')
-        const gdpContainer = document.getElementById('gdp-chart')
-        const energyConsumptionContainer = document.getElementById('energy-consumption-chart')
-
-        if (carbonContainer) {
-          this.resizeObserver.observe(carbonContainer)
-        }
-        if (gdpContainer) {
-          this.resizeObserver.observe(gdpContainer)
-        }
-        if (energyConsumptionContainer) {
-          this.resizeObserver.observe(energyConsumptionContainer)
-        }
-      }
-
-      if (this.intersectionObserver) {
-        const carbonContainer = document.getElementById('carbon-peak-chart')
-        const gdpContainer = document.getElementById('gdp-chart')
-        const energyConsumptionContainer = document.getElementById('energy-consumption-chart')
-
-        if (carbonContainer) {
-          this.intersectionObserver.observe(carbonContainer)
-        }
-        if (gdpContainer) {
-          this.intersectionObserver.observe(gdpContainer)
-        }
-        if (energyConsumptionContainer) {
-          this.intersectionObserver.observe(energyConsumptionContainer)
-        }
-      }
-    },
     saveCharts() {
-      if (this.carbonPeakChart) {
-        const url = this.carbonPeakChart.getDataURL({
-          type: 'png',
-          pixelRatio: 2,
-          backgroundColor: '#fff'
-        })
-        const link = document.createElement('a')
-        link.download = '碳排放达峰预测.png'
-        link.href = url
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-      }
-      
-      if (this.gdpChart) {
-        setTimeout(() => {
-          const url = this.gdpChart.getDataURL({
-            type: 'png',
-            pixelRatio: 2,
-            backgroundColor: '#fff'
-          })
-          const link = document.createElement('a')
-          link.download = '工业生产总值.png'
-          link.href = url
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-        }, 100)
-      }
-
-      if (this.energyConsumptionChart) {
-        setTimeout(() => {
-          const url = this.energyConsumptionChart.getDataURL({
-            type: 'png',
-            pixelRatio: 2,
-            backgroundColor: '#fff'
-          })
-          const link = document.createElement('a')
-          link.download = '综合能源消费量.png'
-          link.href = url
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-        }, 200)
-      }
+      if (!this.carbonPeakChart) return
+      const url = this.carbonPeakChart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#fff' })
+      const link = document.createElement('a')
+      link.download = '碳排放达峰预测.png'
+      link.href = url
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    },
+    handleResize() {
+      ;[this.carbonPeakChart, this.gdpChart, this.energyChart].forEach(c => {
+        if (c) c.resize()
+      })
     },
     goToScenarios() {
       this.$parent.$parent.activeTab = 'scenarios'
+    },
+    formatNumber(value) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) return '-'
+      return Number(value).toLocaleString('zh-CN', { maximumFractionDigits: 2 })
     }
   }
 }
@@ -1097,25 +568,47 @@ export default {
   margin-bottom: 20px;
 }
 
-.chart-card, .data-card {
-  margin-bottom: 20px;
+.chart-card,
+.data-card {
+  border-radius: 14px;
+  border: 1px solid rgba(15, 118, 110, 0.14);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #124e66;
+}
+
+.peak-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .chart-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width: 100%;
   min-height: 300px;
 }
 
 .echarts-container {
   width: 100% !important;
-  height: 500px !important;
-  min-width: 600px !important;
+  height: 450px !important;
   min-height: 400px !important;
+  border-radius: 12px;
 }
 
-.loading-container, .error-container, .empty-data {
+.loading-container,
+.error-container,
+.empty-data {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1124,18 +617,45 @@ export default {
   color: #909399;
 }
 
-.loading-container i, .error-container i, .empty-data i {
+.loading-container i,
+.error-container i,
+.empty-data i {
   font-size: 40px;
   margin-bottom: 10px;
 }
 
-.header-with-select {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+::v-deep .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+  background-color: #0f766e;
+  border-color: #0f766e;
+  box-shadow: -1px 0 0 0 #0f766e;
 }
 
-.header-with-select h2 {
-  margin: 0;
+::v-deep .el-table th {
+  background-color: rgba(20, 184, 166, 0.08);
+  color: #124e66;
+  font-weight: 700;
 }
-</style> 
+
+::v-deep .el-table--border::after,
+::v-deep .el-table--group::after,
+::v-deep .el-table::before {
+  background-color: rgba(15, 118, 110, 0.2);
+}
+
+@media (max-width: 992px) {
+  .prediction-results ::v-deep .el-col {
+    margin-bottom: 12px;
+  }
+
+  .echarts-container {
+    height: 320px !important;
+    min-height: 300px !important;
+  }
+
+  .loading-container,
+  .error-container,
+  .empty-data {
+    min-height: 220px;
+  }
+}
+</style>
