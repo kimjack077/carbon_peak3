@@ -18,5 +18,19 @@
     "model_type": "leap",
     "gdp_growth_rate": 0.068,
     "efficiency_improvement_rate": 0.07
+  },
+  "测试情景": {
+    "model_type": "leap",
+    "gdp_growth_rate": 0.05,
+    "efficiency_improvement_rate": 0.08,
+    "renewable_increase_rate": 0.01,
+    "coal_decrease_rate": 0.02
+  },
+  "自动化测试情景": {
+    "model_type": "leap",
+    "gdp_growth_rate": 0.05,
+    "efficiency_improvement_rate": 0.08,
+    "renewable_increase_rate": 0.01,
+    "coal_decrease_rate": 0.02
   }
 }
