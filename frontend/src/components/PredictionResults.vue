@@ -548,7 +548,7 @@ export default {
       document.body.removeChild(link)
     },
     handleResize() {
-      ;[this.carbonPeakChart, this.gdpChart, this.energyChart].forEach(c => {
+      [this.carbonPeakChart, this.gdpChart, this.energyChart].forEach(c => {
         if (c) c.resize()
       })
     },
