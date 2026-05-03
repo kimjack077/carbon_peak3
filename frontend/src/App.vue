@@ -41,6 +41,9 @@
               :is-active="activeTab === 'results'"
             ></prediction-results>
           </el-tab-pane>
+          <el-tab-pane label="情景对比" name="compare" :disabled="!dataLoaded">
+            <scenario-compare></scenario-compare>
+          </el-tab-pane>
           </el-tabs>
         </section>
       </el-main>
@@ -56,6 +59,7 @@ import DataUpload from './components/DataUpload.vue'
 import ScenarioManager from './components/ScenarioManager.vue'
 import PredictionResults from './components/PredictionResults.vue'
 import ParticleBackground from './components/ParticleBackground.vue'
+import ScenarioCompare from './components/ScenarioCompare.vue'
 
 export default {
   name: 'App',
@@ -63,7 +67,8 @@ export default {
     DataUpload,
     ScenarioManager,
     PredictionResults,
-    ParticleBackground
+    ParticleBackground,
+    ScenarioCompare
   },
   data() {
     return {
