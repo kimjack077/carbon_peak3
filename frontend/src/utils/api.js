@@ -16,7 +16,9 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
   response => response.data,
   error => {
-    const message = error.response?.data?.error || error.message || '请求失败'
+    const resp = error.response
+    const data = resp && resp.data
+    const message = (data && data.error) || error.message || '请求失败'
     return Promise.reject(new Error(message))
   }
 )

@@ -91,7 +91,7 @@ export default {
     },
     initSensitivityChart() {
       const dom = this.$refs.sensitivityChart
-      if (!dom || !this.recommendations?.sensitivity) return
+      if (!dom || !this.recommendations || !this.recommendations.sensitivity) return
 
       this.sensitivityChart = echarts.init(dom)
       this.sensitivityChart.setOption({

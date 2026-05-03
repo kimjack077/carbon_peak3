@@ -58,7 +58,7 @@ export default {
   },
   computed: {
     canUpload() {
-      return this.file && this.validationResult?.valid
+      return this.file && this.validationResult && this.validationResult.valid
     }
   },
   methods: {
