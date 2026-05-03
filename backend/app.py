@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, make_response
 from flask_cors import CORS
 import pandas as pd
 import os
@@ -11,6 +11,7 @@ matplotlib.use("Agg")
 from model.simple_data_processor import SimpleDataProcessor
 from model.simple_scenario_runner import run_simple_scenario, get_model_description
 from utils.plot_results import plot_carbon_peak, plot_gdp, plot_energy_consumption
+from utils.export_utils import generate_excel_report, generate_summary_text
 
 app = Flask(__name__)
 CORS(app)
@@ -496,6 +497,279 @@ def get_trends():
         return jsonify(trends)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/upload/custom", methods=["POST"])
+def upload_custom_data():
+    """Upload custom CSV data"""
+    if "file" not in request.files:
+        return jsonify({"error": "No file part"}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+
+    file_path = os.path.join(DATA_DIR, "base_year_data.csv")
+    file.save(file_path)
+
+    try:
+        processor = SimpleDataProcessor(file_path)
+        data = processor.load_data()
+        df = pd.read_csv(file_path)
+        return jsonify({
+            "message": "Custom data uploaded successfully",
+            "rows": len(data),
+            "years": [int(df["year"].min()), int(df["year"].max())],
+            "data": df.to_dict(orient="records")[:10]
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/data/validate", methods=["POST"])
+def validate_data():
+    """Validate uploaded data structure"""
+    try:
+        data = request.json
+        required_cols = ["year", "gdp", "energy_consumption", "co2_emission"]
+
+        if not data or "columns" not in data:
+            return jsonify({"valid": False, "error": "No column data provided"}), 400
+
+        columns = [col.lower() for col in data.get("columns", [])]
+        missing = [col for col in required_cols if col not in columns]
+
+        if missing:
+            return jsonify({
+                "valid": False,
+                "error": f"Missing required columns: {missing}"
+            })
+
+        return jsonify({"valid": True, "message": "Data structure is valid"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/export/excel/<name>", methods=["GET"])
+def export_excel(name):
+    """Export Excel format prediction results"""
+    try:
+        results_path = os.path.join(OUTPUT_DIR, f"{name}_results.csv")
+        if not os.path.exists(results_path):
+            return jsonify({"error": "Results not found"}), 404
+
+        results_df = pd.read_csv(results_path)
+        results = results_df.to_dict(orient="records")
+        excel_data = generate_excel_report(results, name)
+
+        response = make_response(excel_data)
+        response.headers["Content-Type"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        response.headers["Content-Disposition"] = f"attachment; filename={name}_预测结果.xlsx"
+        return response
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/export/pdf/<name>", methods=["GET"])
+def export_pdf(name):
+    """Export PDF format prediction report"""
+    try:
+        results_path = os.path.join(OUTPUT_DIR, f"{name}_results.csv")
+        if not os.path.exists(results_path):
+            return jsonify({"error": "Results not found"}), 404
+
+        results_df = pd.read_csv(results_path)
+        results = results_df.to_dict(orient="records")
+
+        # 简化版：返回JSON让前端生成PDF
+        summary = generate_summary_text(results, {})
+
+        return jsonify({
+            "summary": summary,
+            "scenario": name,
+            "data": results[:10]
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/recommend/parameters", methods=["GET"])
+def recommend_parameters():
+    """智能参数推荐"""
+    try:
+        data_path = os.path.join(DATA_DIR, "base_year_data.csv")
+        if not os.path.exists(data_path):
+            return jsonify({
+                "gdp_growth_rate": 0.05,
+                "efficiency_improvement_rate": 0.03,
+                "renewable_increase_rate": 0.01,
+                "coal_decrease_rate": 0.02,
+                "gdp_reason": "数据不足，采用默认推荐值",
+                "efficiency_reason": "数据不足，采用默认推荐值",
+                "sensitivity": [0.05, 0.03, 0.01, 0.02]
+            })
+
+        df = pd.read_csv(data_path)
+
+        if len(df) >= 4:
+            years = df["year"].tolist()
+            gdps = df["gdp"].tolist()
+            energies = df["energy_consumption"].tolist()
+
+            # 计算GDP平均增长率
+            gdp_growth = sum((gdps[i+1]/gdps[i] - 1) for i in range(len(gdps)-1)) / (len(gdps)-1)
+
+            # 计算效率改善率
+            intensities = [e/g for e, g in zip(energies, gdps)]
+            efficiency_improve = sum((intensities[i] - intensities[i+1])/intensities[i]
+                                    for i in range(len(intensities)-1)) / (len(intensities)-1)
+
+            recommendations = {
+                "gdp_growth_rate": round(gdp_growth * 0.9, 4),
+                "efficiency_improvement_rate": round(max(efficiency_improve, 0.02), 4),
+                "renewable_increase_rate": 0.015,
+                "coal_decrease_rate": 0.02,
+                "gdp_reason": f"基于历史{len(years)}年数据趋势，建议采用略保守的增长率",
+                "efficiency_reason": "历史能效改善趋势良好，建议维持或加强",
+                "sensitivity": [gdp_growth, efficiency_improve, 0.015, 0.02]
+            }
+        else:
+            recommendations = {
+                "gdp_growth_rate": 0.05,
+                "efficiency_improvement_rate": 0.03,
+                "renewable_increase_rate": 0.01,
+                "coal_decrease_rate": 0.02,
+                "gdp_reason": "数据不足，采用默认推荐值",
+                "efficiency_reason": "数据不足，采用默认推荐值",
+                "sensitivity": [0.05, 0.03, 0.01, 0.02]
+            }
+
+        return jsonify(recommendations)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/scenarios/compare", methods=["POST"])
+def compare_scenarios():
+    """情景对比分析"""
+    try:
+        data = request.json
+        scenario_names = data.get("scenarios", [])
+
+        if len(scenario_names) < 2:
+            return jsonify({"error": "至少需要选择2个情景进行对比"}), 400
+
+        comparison_data = {
+            "peak_years": [],
+            "paths": [],
+            "indicators": [],
+            "years": [],
+            "report": {
+                "summary": f"对比分析了 {len(scenario_names)} 个情景的碳排放路径差异",
+                "details": []
+            }
+        }
+
+        all_years = set()
+
+        for name in scenario_names:
+            results_path = os.path.join(OUTPUT_DIR, f"{name}_results.csv")
+            if not os.path.exists(results_path):
+                continue
+
+            results_df = pd.read_csv(results_path)
+            results = results_df.to_dict(orient="records")
+
+            # 找峰值年份
+            emission_col = "co2_emission" if "co2_emission" in results_df.columns else "total_emission"
+            emissions = results_df[emission_col].tolist()
+
+            if emissions:
+                peak_idx = emissions.index(max(emissions))
+                peak_year = int(results_df.loc[peak_idx, "year"])
+                peak_value = emissions[peak_idx]
+
+                comparison_data["peak_years"].append(peak_year)
+                comparison_data["paths"].append(emissions)
+                comparison_data["report"]["details"].append({
+                    "scenario": name,
+                    "peak_year": peak_year,
+                    "peak_value": f"{peak_value:.2f}",
+                    "reduction_rate": f"{((emissions[0] - emissions[-1])/emissions[0]*100):.1f}%"
+                })
+
+                # 关键指标评分
+                comparison_data["indicators"].append([
+                    100 - peak_year + 2020,
+                    80,
+                    70,
+                    75
+                ])
+
+            for r in results:
+                all_years.add(int(r["year"]))
+
+        comparison_data["years"] = sorted(list(all_years))
+
+        return jsonify(comparison_data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/scenarios/copy", methods=["POST"])
+def copy_scenario():
+    """复制情景"""
+    try:
+        data = request.json
+        source_name = data.get("source")
+        new_name = data.get("name")
+
+        if not source_name or not new_name:
+            return jsonify({"error": "需要提供源情景名和新情景名"}), 400
+
+        scenarios_file = os.path.join(DATA_DIR, "scenarios.json")
+        if not os.path.exists(scenarios_file):
+            return jsonify({"error": "情景文件不存在"}), 404
+
+        with open(scenarios_file, "r", encoding="utf-8") as f:
+            scenarios = json.load(f)
+
+        if source_name not in scenarios:
+            return jsonify({"error": "源情景不存在"}), 404
+
+        scenarios[new_name] = {**scenarios[source_name]}
+        save_scenarios(scenarios)
+
+        return jsonify({"success": True, "name": new_name})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def save_scenarios(scenarios):
+    """保存情景到文件"""
+    scenarios_file = os.path.join(DATA_DIR, "scenarios.json")
+    with open(scenarios_file, "w", encoding="utf-8") as f:
+        json.dump(scenarios, f, ensure_ascii=False, indent=2)
+
+
+def get_scenario_results(name):
+    """获取情景预测结果"""
+    results_path = os.path.join(OUTPUT_DIR, f"{name}_results.csv")
+    if not os.path.exists(results_path):
+        return []
+
+    df = pd.read_csv(results_path)
+    return df.to_dict(orient="records")
+
+
+def load_current_data():
+    """加载当前数据"""
+    data_path = os.path.join(DATA_DIR, "base_year_data.csv")
+    if not os.path.exists(data_path):
+        return []
+
+    df = pd.read_csv(data_path)
+    return df.to_dict(orient="records")
 
 
 if __name__ == "__main__":
