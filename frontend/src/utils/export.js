@@ -1,7 +1,6 @@
 // frontend/src/utils/export.js
 import XLSX from 'xlsx-js-style'
 import jsPDF from 'jspdf'
-import { formatNumber } from './helpers'
 
 export const exportToExcel = (data, scenarioName) => {
   const ws = XLSX.utils.json_to_sheet(data.map(row => ({
