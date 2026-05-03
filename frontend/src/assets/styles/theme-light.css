@@ -1,0 +1,71 @@
+/* frontend/src/assets/styles/theme-light.css */
+/* 浅色专业风主题 - 清新简约 */
+
+[data-theme="light"] {
+  /* 背景色 */
+  --cp-bg-primary: #ffffff;
+  --cp-bg-secondary: #f8fafc;
+  --cp-bg-tertiary: #f1f5f9;
+  --cp-bg-card: #ffffff;
+  --cp-bg-header: #ffffff;
+  --cp-bg-footer: #f1f5f9;
+  --cp-bg-input: #ffffff;
+  --cp-bg-table-header: rgba(20, 184, 166, 0.06);
+  --cp-bg-table-row-stripe: rgba(15, 118, 110, 0.03);
+  --cp-bg-hover: rgba(15, 118, 110, 0.08);
+  --cp-bg-active: rgba(15, 118, 110, 0.12);
+
+  /* 文字色 */
+  --cp-text-primary: #134e4a;
+  --cp-text-secondary: #5f7f74;
+  --cp-text-muted: #6b7280;
+  --cp-text-inverse: #ffffff;
+  --cp-text-link: #0f766e;
+
+  /* 强调色 */
+  --cp-accent-primary: #0f766e;
+  --cp-accent-secondary: #14b8a6;
+  --cp-accent-gradient: linear-gradient(135deg, #0f766e, #14b8a6);
+  --cp-accent-light: rgba(15, 118, 110, 0.1);
+  --cp-accent-danger: #ef4444;
+  --cp-accent-success: #10b981;
+  --cp-accent-warning: #f59e0b;
+
+  /* 边框色 */
+  --cp-border-primary: rgba(15, 118, 110, 0.12);
+  --cp-border-secondary: rgba(15, 118, 110, 0.24);
+  --cp-border-focus: rgba(15, 118, 110, 0.4);
+  --cp-border-light: rgba(15, 118, 110, 0.06);
+
+  /* 阴影 */
+  --cp-shadow-sm: 0 2px 8px rgba(15, 118, 110, 0.06);
+  --cp-shadow-md: 0 4px 12px rgba(15, 118, 110, 0.08);
+  --cp-shadow-lg: 0 8px 24px rgba(15, 118, 110, 0.12);
+  --cp-shadow-glow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+
+  /* 图表配色 */
+  --cp-chart-historical: #64748b;
+  --cp-chart-gridline: rgba(15, 118, 110, 0.1);
+  --cp-chart-scenario-1: #0f766e;
+  --cp-chart-scenario-2: #3b82f6;
+  --cp-chart-scenario-3: #f59e0b;
+  --cp-chart-scenario-4: #ef4444;
+  --cp-chart-scenario-5: #8b5cf6;
+  --cp-chart-scenario-6: #10b981;
+
+  /* Header 渐变边框 */
+  --cp-header-border: linear-gradient(90deg, #0f766e, #14b8a6);
+}
+
+/* 浅色主题全局样式 */
+[data-theme="light"] body,
+[data-theme="light"] #app {
+  background: var(--cp-bg-secondary);
+  color: var(--cp-text-primary);
+}
+
+/* 浅色主题禁用背景动画 */
+[data-theme="light"] .ambient-bg,
+[data-theme="light"] .particle-background {
+  display: none !important;
+}
