@@ -247,6 +247,7 @@ ehthumbs.db
 Thumbs.db
 
 # Project specific
+.worktrees/
 backend/output/
 backend/data/*.csv
 !backend/data/base_year_data.csv
