@@ -1,0 +1,66 @@
+/* frontend/src/assets/styles/theme-dark.css */
+/* 深色科技风主题 - 玻璃态 */
+
+[data-theme="dark"] {
+  /* 背景色 */
+  --cp-bg-primary: #0a0f1a;
+  --cp-bg-secondary: rgba(15, 23, 42, 0.85);
+  --cp-bg-tertiary: rgba(15, 23, 42, 0.6);
+  --cp-bg-card: rgba(15, 23, 42, 0.85);
+  --cp-bg-header: linear-gradient(135deg, rgba(15, 118, 110, 0.4), rgba(139, 92, 246, 0.3));
+  --cp-bg-footer: linear-gradient(135deg, rgba(15, 118, 110, 0.35), rgba(139, 92, 246, 0.25));
+  --cp-bg-input: rgba(15, 23, 42, 0.6);
+  --cp-bg-table-header: rgba(15, 118, 110, 0.25);
+  --cp-bg-table-row-stripe: rgba(255, 255, 255, 0.05);
+  --cp-bg-hover: rgba(255, 255, 255, 0.1);
+  --cp-bg-active: rgba(255, 255, 255, 0.15);
+
+  /* 文字色 */
+  --cp-text-primary: #e2e8f0;
+  --cp-text-secondary: #94a3b8;
+  --cp-text-muted: #64748b;
+  --cp-text-inverse: #0a0f1a;
+  --cp-text-link: #14b8a6;
+
+  /* 强调色 */
+  --cp-accent-primary: #14b8a6;
+  --cp-accent-secondary: #0f766e;
+  --cp-accent-gradient: linear-gradient(135deg, #0f766e, #14b8a6);
+  --cp-accent-light: rgba(14, 184, 166, 0.15);
+  --cp-accent-danger: #f87171;
+  --cp-accent-success: #34d399;
+  --cp-accent-warning: #fbbf24;
+
+  /* 边框色 */
+  --cp-border-primary: rgba(255, 255, 255, 0.15);
+  --cp-border-secondary: rgba(255, 255, 255, 0.25);
+  --cp-border-focus: rgba(14, 184, 166, 0.5);
+  --cp-border-light: rgba(255, 255, 255, 0.08);
+
+  /* 阴影 */
+  --cp-shadow-sm: 0 4px 12px rgba(15, 118, 110, 0.15);
+  --cp-shadow-md: 0 8px 18px rgba(15, 118, 110, 0.2);
+  --cp-shadow-lg: 0 20px 45px rgba(15, 118, 110, 0.25);
+  --cp-shadow-glow: 0 0 30px rgba(15, 118, 110, 0.3);
+
+  /* 图表配色 */
+  --cp-chart-historical: #94a3b8;
+  --cp-chart-gridline: rgba(255, 255, 255, 0.1);
+  --cp-chart-scenario-1: #14b8a6;
+  --cp-chart-scenario-2: #60a5fa;
+  --cp-chart-scenario-3: #fbbf24;
+  --cp-chart-scenario-4: #f87171;
+  --cp-chart-scenario-5: #a78bfa;
+  --cp-chart-scenario-6: #34d399;
+}
+
+/* 深色主题全局样式 - 保持现有风格 */
+[data-theme="dark"] #app {
+  background: linear-gradient(135deg, #0a0f1a 0%, #1a1f3a 50%, #0f1a2a 100%);
+  color: var(--cp-text-primary);
+}
+
+/* 深色主题启用背景动画 */
+[data-theme="dark"] .ambient-bg {
+  display: block;
+}
