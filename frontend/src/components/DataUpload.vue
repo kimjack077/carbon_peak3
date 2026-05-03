@@ -7,11 +7,16 @@
       </div>
       <div class="upload-content">
         <p class="intro-copy">系统已自动加载示例数据，您可以直接进行预测。</p>
-        
+
+        <!-- 数据导入区域 -->
+        <div class="import-section">
+          <data-import @data-imported="handleDataImported"></data-import>
+        </div>
+
         <div v-if="uploadStatus" :class="['upload-status', uploadStatus.type]">
           <i :class="uploadStatus.icon"></i> {{ uploadStatus.message }}
         </div>
-        
+
         <div v-if="dataInfo" class="data-info">
           <h3>数据概览</h3>
           <div class="info-grid">
@@ -66,9 +71,11 @@
 
 <script>
 import axios from 'axios'
+import DataImport from './DataImport.vue'
 
 export default {
   name: 'DataUpload',
+  components: { DataImport },
   data() {
     return {
       uploadStatus: null,
@@ -81,6 +88,11 @@ export default {
     this.useExampleData();
   },
   methods: {
+    handleDataImported(success) {
+      if (success) {
+        this.useExampleData()
+      }
+    },
     useExampleData() {
       this.uploadStatus = {
         type: 'loading',
@@ -154,9 +166,13 @@ export default {
 }
 
 .intro-copy {
-  color: #304c42;
+  color: var(--cp-text, #304c42);
   margin-bottom: 14px;
   line-height: 1.7;
+}
+
+.import-section {
+  margin-bottom: 20px;
 }
 
 pre {
