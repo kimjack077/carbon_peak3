@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <particle-background></particle-background>
     <div class="ambient-bg" aria-hidden="true">
       <span class="orb orb-a"></span>
       <span class="orb orb-b"></span>
@@ -54,13 +55,15 @@
 import DataUpload from './components/DataUpload.vue'
 import ScenarioManager from './components/ScenarioManager.vue'
 import PredictionResults from './components/PredictionResults.vue'
+import ParticleBackground from './components/ParticleBackground.vue'
 
 export default {
   name: 'App',
   components: {
     DataUpload,
     ScenarioManager,
-    PredictionResults
+    PredictionResults,
+    ParticleBackground
   },
   data() {
     return {
