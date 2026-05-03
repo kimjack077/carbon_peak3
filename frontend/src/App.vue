@@ -22,6 +22,7 @@
           </div>
           <div class="header-info">
             <el-tag size="small" effect="dark">LEAP / Kaya / STIRPAT</el-tag>
+            <theme-toggle></theme-toggle>
           </div>
         </div>
       </el-header>
@@ -60,6 +61,8 @@ import ScenarioManager from './components/ScenarioManager.vue'
 import PredictionResults from './components/PredictionResults.vue'
 import ParticleBackground from './components/ParticleBackground.vue'
 import ScenarioCompare from './components/ScenarioCompare.vue'
+import ThemeToggle from './components/ThemeToggle.vue'
+import { themeStore } from './store/themeStore'
 
 export default {
   name: 'App',
@@ -68,7 +71,8 @@ export default {
     ScenarioManager,
     PredictionResults,
     ParticleBackground,
-    ScenarioCompare
+    ScenarioCompare,
+    ThemeToggle
   },
   data() {
     return {
@@ -76,6 +80,9 @@ export default {
       dataLoaded: false,
       resultsKey: 0
     }
+  },
+  created() {
+    themeStore.init()
   },
   methods: {
     handleDataLoaded(success) {
@@ -93,9 +100,11 @@ export default {
 </script>
 
 <style>
-@import url('./assets/styles/theme.css');
+@import url('./assets/styles/design-tokens.css');
+@import url('./assets/styles/theme-light.css');
+@import url('./assets/styles/theme-dark.css');
+@import url('./assets/styles/components-base.css');
 @import url('./assets/styles/animations.css');
-@import url('./assets/styles/glassmorphism.css');
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap');
 
 * {
@@ -104,39 +113,16 @@ export default {
   box-sizing: border-box;
 }
 
-:root {
-  --cp-bg-deep: #0a0f1a;
-  --cp-bg-surface: rgba(15, 23, 42, 0.85);
-  --cp-bg: #0a0f1a;
-  --cp-surface: rgba(15, 23, 42, 0.85);
-  --cp-surface-strong: rgba(15, 23, 42, 0.95);
-  --cp-text: #e2e8f0;
-  --cp-text-muted: #94a3b8;
-  --cp-primary: #0f766e;
-  --cp-primary-deep: #14b8a6;
-  --cp-primary-glow: rgba(15, 118, 110, 0.4);
-  --cp-accent: #f59e0b;
-  --cp-neon-blue: #3b82f6;
-  --cp-neon-purple: #8b5cf6;
-  --cp-glass-bg: rgba(255, 255, 255, 0.08);
-  --cp-glass-border: rgba(255, 255, 255, 0.15);
-  --cp-border: rgba(255, 255, 255, 0.15);
-  --cp-shadow-lg: 0 20px 45px rgba(15, 118, 110, 0.2);
-  --cp-shadow-sm: 0 8px 18px rgba(15, 118, 110, 0.15);
-  --cp-shadow-glow: 0 0 30px rgba(15, 118, 110, 0.3);
-  --cp-radius-lg: 20px;
-  --cp-radius-md: 14px;
-}
-
 #app {
   font-family: 'Manrope', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: var(--cp-text);
-  background: linear-gradient(135deg, #0a0f1a 0%, #1a1f3a 50%, #0f1a2a 100%);
+  color: var(--cp-text-primary);
+  background: var(--cp-bg-primary);
   min-height: 100vh;
   position: relative;
   overflow: hidden;
+  transition: background 400ms ease-out, color 300ms ease-out;
 }
 
 .ambient-bg {
@@ -190,16 +176,22 @@ export default {
 }
 
 .app-header {
-  color: #f8fafc;
+  color: var(--cp-text-primary);
   height: 78px !important;
-  padding: 0 28px;
+  padding: 0 var(--cp-spacing-lg);
   display: flex;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  background: linear-gradient(135deg, rgba(15, 118, 110, 0.4), rgba(139, 92, 246, 0.3));
+  border-bottom: 2px solid var(--cp-header-border);
+  background: var(--cp-bg-header);
+  box-shadow: var(--cp-shadow-sm);
+  transition: all var(--cp-transition-slow);
+}
+
+[data-theme="dark"] .app-header {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 0 30px rgba(15, 118, 110, 0.3);
+  border-bottom: 1px solid var(--cp-border-primary);
+  box-shadow: var(--cp-shadow-glow);
 }
 
 .header-content {
@@ -260,17 +252,18 @@ export default {
 }
 
 .app-footer {
-  background: linear-gradient(135deg, rgba(15, 118, 110, 0.35), rgba(139, 92, 246, 0.25));
+  background: var(--cp-bg-footer);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--cp-text-secondary);
   height: 48px !important;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
   letter-spacing: 0.02em;
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-top: 1px solid var(--cp-border-primary);
+  transition: all var(--cp-transition-slow);
 }
 
 ::v-deep .app-tabs > .el-tabs__header {
