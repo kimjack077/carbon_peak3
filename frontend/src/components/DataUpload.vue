@@ -138,8 +138,8 @@ export default {
 }
 
 .upload-card {
-  margin-bottom: 20px;
-  border-radius: 16px;
+  margin-bottom: var(--cp-spacing-lg);
+  border-radius: var(--cp-radius-lg);
 }
 
 .upload-content {
@@ -155,20 +155,20 @@ export default {
 
 .upload-head h2 {
   margin: 0;
-  color: #134e4a;
-  font-size: 20px;
+  color: var(--cp-text-primary);
+  font-size: var(--cp-font-lg);
   font-weight: 800;
 }
 
 .upload-head-tip {
-  font-size: 12px;
-  color: #5f7f74;
+  font-size: var(--cp-font-xs);
+  color: var(--cp-text-secondary);
 }
 
 .intro-copy {
-  color: var(--cp-text, #304c42);
+  color: var(--cp-text-secondary);
   margin-bottom: 14px;
-  line-height: 1.7;
+  line-height: var(--cp-line-height);
 }
 
 .import-section {
@@ -195,19 +195,19 @@ pre {
 }
 
 .upload-status.success {
-  background-color: rgba(16, 185, 129, 0.12);
-  color: #047857;
-  border: 1px solid rgba(16, 185, 129, 0.22);
+  background: var(--cp-accent-light);
+  color: var(--cp-accent-primary);
+  border: 1px solid var(--cp-border-secondary);
 }
 
 .upload-status.error {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--cp-accent-danger);
   border: 1px solid rgba(239, 68, 68, 0.22);
 }
 
 .upload-status.loading {
-  background-color: rgba(37, 99, 235, 0.09);
+  background: rgba(37, 99, 235, 0.09);
   color: #1d4ed8;
   border: 1px solid rgba(37, 99, 235, 0.18);
 }
@@ -215,16 +215,16 @@ pre {
 .data-info {
   margin-top: 24px;
   padding: 18px;
-  background: linear-gradient(180deg, rgba(20, 184, 166, 0.08), rgba(255, 255, 255, 0.9));
-  border-radius: 12px;
+  background: var(--cp-bg-active);
+  border-radius: var(--cp-radius-md);
   text-align: left;
-  border: 1px solid rgba(19, 78, 74, 0.12);
+  border: 1px solid var(--cp-border-primary);
 }
 
 .data-info h3 {
   margin: 0 0 14px;
-  color: #134e4a;
-  font-size: 16px;
+  color: var(--cp-text-primary);
+  font-size: var(--cp-font-md);
   font-weight: 800;
 }
 
@@ -236,9 +236,9 @@ pre {
 }
 
 .info-item {
-  background: #ffffff;
-  border: 1px solid rgba(19, 78, 74, 0.12);
-  border-radius: 10px;
+  background: var(--cp-bg-card);
+  border: 1px solid var(--cp-border-primary);
+  border-radius: var(--cp-radius-md);
   padding: 10px 12px;
   min-height: 74px;
   display: flex;
@@ -247,12 +247,12 @@ pre {
 }
 
 .item-label {
-  color: #5f7f74;
-  font-size: 12px;
+  color: var(--cp-text-muted);
+  font-size: var(--cp-font-xs);
 }
 
 .info-item strong {
-  color: #0f3f3b;
+  color: var(--cp-text-primary);
   line-height: 1.4;
 }
 
@@ -263,16 +263,16 @@ pre {
 .data-table {
   margin-top: 20px;
   padding: 20px;
-  background-color: #ffffff;
-  border-radius: 12px;
-  border: 1px solid rgba(19, 78, 74, 0.12);
+  background: var(--cp-bg-card);
+  border-radius: var(--cp-radius-md);
+  border: 1px solid var(--cp-border-primary);
 }
 
 .data-table h3 {
   margin-top: 0;
   margin-bottom: 15px;
-  color: #134e4a;
-  font-size: 16px;
+  color: var(--cp-text-primary);
+  font-size: var(--cp-font-md);
   font-weight: 800;
 }
 
