@@ -1,0 +1,23 @@
+/* frontend/src/assets/styles/glassmorphism.css */
+.glass-card {
+  background: var(--cp-glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--cp-glass-border);
+  border-radius: 16px;
+  box-shadow: var(--cp-shadow-glow);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--cp-primary);
+  transform: translateY(-4px);
+  box-shadow: 0 0 40px var(--cp-primary-glow);
+}
+
+.glass-header {
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.3), rgba(139, 92, 246, 0.2));
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--cp-glass-border);
+}
