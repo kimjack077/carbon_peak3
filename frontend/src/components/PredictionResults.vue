@@ -182,7 +182,7 @@ export default {
 
       // 减排幅度 (计算从峰值到终点)
       if (firstScenario && firstScenario.emissions) {
-        const peakEmission = firstScenario.peak?.emission || 0
+        const peakEmission = (firstScenario.peak && firstScenario.peak.emission) || 0
         const lastEmission = firstScenario.emissions[firstScenario.emissions.length - 1] || 0
         const reduction = ((peakEmission - lastEmission) / peakEmission * 100).toFixed(1)
         metrics.push({
