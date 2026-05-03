@@ -1,5 +1,8 @@
 <template>
   <div class="scenario-manager">
+    <!-- 参数推荐区域 -->
+    <parameter-recommend @apply="applyRecommendedParams" class="recommend-section" />
+
     <el-row :gutter="24">
       <el-col :xs="24" :sm="24" :md="10" :lg="10">
         <el-card class="scenario-card" shadow="hover">
@@ -104,9 +107,11 @@
 
 <script>
 import axios from 'axios'
+import ParameterRecommend from './ParameterRecommend.vue'
 
 export default {
   name: 'ScenarioManager',
+  components: { ParameterRecommend },
   data() {
     return {
       scenarioForm: {
@@ -133,6 +138,15 @@ export default {
     this.loadTrends()
   },
   methods: {
+    applyRecommendedParams(params) {
+      this.scenarioForm = {
+        ...this.scenarioForm,
+        gdp_growth_rate: params.gdp_growth_rate,
+        efficiency_improvement_rate: params.efficiency_improvement_rate,
+        renewable_increase_rate: params.renewable_increase_rate,
+        coal_decrease_rate: params.coal_decrease_rate
+      }
+    },
     loadScenarios() {
       axios.get('/api/scenarios')
         .then(response => {
@@ -277,6 +291,10 @@ export default {
 
 <style scoped>
 .scenario-manager {
+  margin-bottom: 20px;
+}
+
+.recommend-section {
   margin-bottom: 20px;
 }
 
