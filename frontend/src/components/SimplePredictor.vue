@@ -281,9 +281,8 @@ export default {
       const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6'];
       
       const datasets = this.predictionResults.map((result, index) => {
-        const allYears = [...result.historical.years, ...result.forecast.years];
         const allGDP = [...result.historical.gdp, ...result.forecast.gdp];
-        
+
         return {
           label: result.name,
           data: allGDP.map(gdp => gdp / 10000), // 转换为亿元
