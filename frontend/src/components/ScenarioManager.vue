@@ -291,17 +291,17 @@ export default {
 
 <style scoped>
 .scenario-manager {
-  margin-bottom: 20px;
+  margin-bottom: var(--cp-spacing-lg);
 }
 
 .recommend-section {
-  margin-bottom: 20px;
+  margin-bottom: var(--cp-spacing-lg);
 }
 
 .scenario-card, .scenario-list-card {
   height: 100%;
-  border-radius: 14px;
-  border: 1px solid rgba(15, 118, 110, 0.14);
+  border-radius: var(--cp-radius-lg);
+  border: 1px solid var(--cp-border-primary);
 }
 
 .card-header {
@@ -311,9 +311,9 @@ export default {
 }
 
 .card-title {
-  font-size: 17px;
+  font-size: var(--cp-font-md);
   font-weight: 800;
-  color: #124e66;
+  color: var(--cp-text-primary);
 }
 
 .el-divider {
@@ -328,13 +328,13 @@ export default {
 .empty-scenarios {
   text-align: center;
   padding: 42px 0;
-  color: #6b7280;
+  color: var(--cp-text-muted);
 }
 
 .empty-scenarios i {
   font-size: 48px;
   margin-bottom: 16px;
-  color: #9ca3af;
+  color: var(--cp-text-muted);
 }
 
 .run-prediction {
@@ -348,8 +348,8 @@ export default {
 }
 
 .prediction-hint {
-  color: #64748b;
-  font-size: 12px;
+  color: var(--cp-text-muted);
+  font-size: var(--cp-font-xs);
 }
 
 ::v-deep .el-slider__input {
