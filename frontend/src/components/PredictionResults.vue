@@ -27,8 +27,11 @@
             <p>{{ error }}</p>
             <el-button type="primary" @click="runAutoPrediction">重新运行预测</el-button>
           </div>
-          <div v-else class="chart-container">
-            <div id="carbon-peak-chart" class="echarts-container"></div>
+          <div v-else>
+            <metric-card v-if="metricCardsData.length > 0" :metrics="metricCardsData"></metric-card>
+            <div class="chart-container">
+              <div id="carbon-peak-chart" class="echarts-container"></div>
+            </div>
           </div>
         </el-card>
       </el-col>
@@ -110,15 +113,14 @@
 <script>
 import axios from 'axios'
 import * as echarts from 'echarts'
+import MetricCard from './MetricCard.vue'
+import { themeStore } from '@/store/themeStore'
 
 const COLORS = {
   coal: '#6B7280',
   renewable: '#10B981',
-  other: '#F59E0B',
-  historical: '#64748B'
+  other: '#F59E0B'
 }
-
-const SCENARIO_COLORS = ['#1E40AF', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899']
 
 function hasArray(data, key) {
   return data && Array.isArray(data[key]) && data[key].length > 0
@@ -126,10 +128,81 @@ function hasArray(data, key) {
 
 export default {
   name: 'PredictionResults',
+  components: {
+    MetricCard
+  },
   props: {
     isActive: {
       type: Boolean,
       default: false
+    }
+  },
+  computed: {
+    isDark() {
+      return themeStore.isDark()
+    },
+    chartColors() {
+      return this.isDark
+        ? ['#14b8a6', '#60a5fa', '#fbbf24', '#f87171', '#a78bfa', '#34d399']
+        : ['#0f766e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#10b981']
+    },
+    historicalColor() {
+      return this.isDark ? '#94a3b8' : '#64748b'
+    },
+    metricCardsData() {
+      if (!this.chartData || Object.keys(this.chartData).length === 0) {
+        return []
+      }
+
+      const metrics = []
+      const scenarioKeys = Object.keys(this.chartData)
+
+      // 达峰年份
+      const firstPeak = this.peakSummaries[0]
+      if (firstPeak) {
+        metrics.push({
+          label: '预测达峰年份',
+          value: firstPeak.year + '年',
+          unit: '',
+          trend: 'down',
+          trendClass: 'down'
+        })
+      }
+
+      // 排放峰值
+      const firstScenario = this.chartData[scenarioKeys[0]]
+      if (firstScenario && firstScenario.peak) {
+        metrics.push({
+          label: '排放峰值',
+          value: Math.round(firstScenario.peak.emission).toLocaleString(),
+          unit: '万吨CO₂',
+          trend: null
+        })
+      }
+
+      // 减排幅度 (计算从峰值到终点)
+      if (firstScenario && firstScenario.emissions) {
+        const peakEmission = firstScenario.peak?.emission || 0
+        const lastEmission = firstScenario.emissions[firstScenario.emissions.length - 1] || 0
+        const reduction = ((peakEmission - lastEmission) / peakEmission * 100).toFixed(1)
+        metrics.push({
+          label: '减排幅度',
+          value: reduction + '%',
+          unit: '预测下降',
+          trend: parseFloat(reduction) > 0 ? 'down' : 'up',
+          trendClass: parseFloat(reduction) > 0 ? 'down' : 'up'
+        })
+      }
+
+      // 情景数量
+      metrics.push({
+        label: '预测情景',
+        value: scenarioKeys.length + '个',
+        unit: '已创建',
+        trend: null
+      })
+
+      return metrics
     }
   },
   data() {
@@ -162,6 +235,16 @@ export default {
           }, 120)
         })
       }
+    },
+    isDark() {
+      // 主题变化时重绘所有图表
+      this.$nextTick(() => {
+        setTimeout(() => {
+          this.initCarbonPeakChart()
+          this.initGdpChart()
+          this.initEnergyChart()
+        }, 300) // 等待 CSS 过渡完成
+      })
     }
   },
   created() {
@@ -288,7 +371,7 @@ export default {
           name: '历史数据',
           type: 'line',
           data: this.buildAlignedSeries(yearLabels, firstData.historical_years, firstData.historical_emissions),
-          lineStyle: { width: 2, type: 'dashed', color: COLORS.historical },
+          lineStyle: { width: 2, type: 'dashed', color: this.historicalColor },
           symbolSize: 5,
           connectNulls: false
         })
@@ -302,7 +385,7 @@ export default {
           type: 'line',
           smooth: true,
           data: this.buildAlignedSeries(yearLabels, item.years, item.emissions),
-          lineStyle: { width: 3, color: SCENARIO_COLORS[index % SCENARIO_COLORS.length] },
+          lineStyle: { width: 3, color: this.chartColors[index % this.chartColors.length] },
           symbolSize: 5,
           connectNulls: false
         })
@@ -310,7 +393,17 @@ export default {
 
       this.carbonPeakChart.setOption({
         title: { text: '碳排放达峰预测', left: 'center' },
-        tooltip: { trigger: 'axis' },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: this.isDark ? 'rgba(15, 23, 42, 0.9)' : '#ffffff',
+          borderColor: this.isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(15, 118, 110, 0.2)',
+          borderRadius: 12,
+          shadowBlur: this.isDark ? 20 : 8,
+          shadowColor: this.isDark ? 'rgba(15, 118, 110, 0.3)' : 'rgba(15, 118, 110, 0.1)',
+          textStyle: {
+            color: this.isDark ? '#e2e8f0' : '#134e4a'
+          }
+        },
         legend: { type: 'scroll', top: 30 },
         grid: { left: '8%', right: '4%', top: '22%', bottom: '12%', containLabel: true },
         xAxis: { type: 'category', name: '年份', data: yearLabels, boundaryGap: false, axisLabel: { rotate: 35 } },
@@ -336,7 +429,7 @@ export default {
           name: '历史数据',
           type: 'line',
           data: this.buildAlignedSeries(yearLabels, firstData.historical_years, firstData.historical_gdp),
-          lineStyle: { width: 2, type: 'dashed', color: COLORS.historical },
+          lineStyle: { width: 2, type: 'dashed', color: this.historicalColor },
           symbolSize: 5,
           connectNulls: false
         })
@@ -350,7 +443,7 @@ export default {
           type: 'line',
           smooth: true,
           data: this.buildAlignedSeries(yearLabels, item.years, item.gdp),
-          lineStyle: { width: 3, color: SCENARIO_COLORS[index % SCENARIO_COLORS.length] },
+          lineStyle: { width: 3, color: this.chartColors[index % this.chartColors.length] },
           symbolSize: 5,
           connectNulls: false
         })
@@ -358,7 +451,17 @@ export default {
 
       this.gdpChart.setOption({
         title: { text: 'GDP预测', left: 'center' },
-        tooltip: { trigger: 'axis' },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: this.isDark ? 'rgba(15, 23, 42, 0.9)' : '#ffffff',
+          borderColor: this.isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(15, 118, 110, 0.2)',
+          borderRadius: 12,
+          shadowBlur: this.isDark ? 20 : 8,
+          shadowColor: this.isDark ? 'rgba(15, 118, 110, 0.3)' : 'rgba(15, 118, 110, 0.1)',
+          textStyle: {
+            color: this.isDark ? '#e2e8f0' : '#134e4a'
+          }
+        },
         legend: { type: 'scroll', top: 30 },
         grid: { left: '10%', right: '4%', top: '22%', bottom: '12%', containLabel: true },
         xAxis: { type: 'category', name: '年份', data: yearLabels, boundaryGap: false, axisLabel: { rotate: 35 } },
@@ -435,7 +538,18 @@ export default {
 
       this.energyChart.setOption({
         title: { text: `能源消费结构（${firstScenario}）`, left: 'center' },
-        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow' },
+          backgroundColor: this.isDark ? 'rgba(15, 23, 42, 0.9)' : '#ffffff',
+          borderColor: this.isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(15, 118, 110, 0.2)',
+          borderRadius: 12,
+          shadowBlur: this.isDark ? 20 : 8,
+          shadowColor: this.isDark ? 'rgba(15, 118, 110, 0.3)' : 'rgba(15, 118, 110, 0.1)',
+          textStyle: {
+            color: this.isDark ? '#e2e8f0' : '#134e4a'
+          }
+        },
         legend: { bottom: 0 },
         grid: { left: '10%', right: '6%', top: '16%', bottom: '18%', containLabel: true },
         xAxis: { type: 'category', data: allYears, axisLabel: { rotate: 45 } },
@@ -455,7 +569,7 @@ export default {
           name: '历史数据',
           type: 'line',
           data: this.buildAlignedSeries(yearLabels, firstData.historical_years, firstData.historical_energy),
-          lineStyle: { width: 2, type: 'dashed', color: COLORS.historical },
+          lineStyle: { width: 2, type: 'dashed', color: this.historicalColor },
           symbolSize: 5,
           connectNulls: false
         })
@@ -471,7 +585,7 @@ export default {
           type: 'line',
           smooth: true,
           data: this.buildAlignedSeries(yearLabels, item.years, totals),
-          lineStyle: { width: 3, color: SCENARIO_COLORS[index % SCENARIO_COLORS.length] },
+          lineStyle: { width: 3, color: this.chartColors[index % this.chartColors.length] },
           symbolSize: 5,
           connectNulls: false
         })
@@ -479,7 +593,17 @@ export default {
 
       this.energyChart.setOption({
         title: { text: '综合能源消费预测', left: 'center' },
-        tooltip: { trigger: 'axis' },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: this.isDark ? 'rgba(15, 23, 42, 0.9)' : '#ffffff',
+          borderColor: this.isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(15, 118, 110, 0.2)',
+          borderRadius: 12,
+          shadowBlur: this.isDark ? 20 : 8,
+          shadowColor: this.isDark ? 'rgba(15, 118, 110, 0.3)' : 'rgba(15, 118, 110, 0.1)',
+          textStyle: {
+            color: this.isDark ? '#e2e8f0' : '#134e4a'
+          }
+        },
         legend: { type: 'scroll', top: 30 },
         grid: { left: '10%', right: '4%', top: '22%', bottom: '12%', containLabel: true },
         xAxis: { type: 'category', name: '年份', data: yearLabels, boundaryGap: false, axisLabel: { rotate: 35 } },
