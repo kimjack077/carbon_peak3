@@ -1,0 +1,33 @@
+/* frontend/src/assets/styles/design-tokens.css */
+/* 共享设计变量 - 间距、圆角、字体、动画时长等 */
+
+:root {
+  /* 圆角系统 */
+  --cp-radius-sm: 8px;
+  --cp-radius-md: 12px;
+  --cp-radius-lg: 16px;
+  --cp-radius-xl: 20px;
+
+  /* 间距系统 (8dp rhythm) */
+  --cp-spacing-xs: 4px;
+  --cp-spacing-sm: 8px;
+  --cp-spacing-md: 16px;
+  --cp-spacing-lg: 24px;
+  --cp-spacing-xl: 32px;
+
+  /* 字体系统 */
+  --cp-font-xs: 12px;
+  --cp-font-sm: 14px;
+  --cp-font-md: 16px;
+  --cp-font-lg: 18px;
+  --cp-font-xl: 24px;
+  --cp-line-height: 1.5;
+
+  /* 动画时长 */
+  --cp-transition-fast: 150ms ease-out;
+  --cp-transition-normal: 200ms ease-out;
+  --cp-transition-slow: 300ms ease-out;
+
+  /* 触摸目标 */
+  --cp-touch-target: 44px;
+}
