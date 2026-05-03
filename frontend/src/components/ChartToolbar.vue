@@ -22,8 +22,8 @@ export default {
   methods: {
     toggleFullscreen() {
       const chartContainer = this.$parent.$el.querySelector('.echarts-container')
-      if (!document.fullscreenElement) {
-        chartContainer?.requestFullscreen()
+      if (!document.fullscreenElement && chartContainer) {
+        chartContainer.requestFullscreen()
       } else {
         document.exitFullscreen()
       }
