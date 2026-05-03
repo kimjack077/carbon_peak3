@@ -85,6 +85,9 @@ export default {
 </script>
 
 <style>
+@import url('./assets/styles/theme.css');
+@import url('./assets/styles/animations.css');
+@import url('./assets/styles/glassmorphism.css');
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap');
 
 * {
@@ -94,17 +97,25 @@ export default {
 }
 
 :root {
-  --cp-bg: #f4f8f5;
-  --cp-surface: rgba(255, 255, 255, 0.8);
-  --cp-surface-strong: rgba(255, 255, 255, 0.96);
-  --cp-text: #102a22;
-  --cp-text-muted: #4f6b5f;
+  --cp-bg-deep: #0a0f1a;
+  --cp-bg-surface: rgba(15, 23, 42, 0.85);
+  --cp-bg: #0a0f1a;
+  --cp-surface: rgba(15, 23, 42, 0.85);
+  --cp-surface-strong: rgba(15, 23, 42, 0.95);
+  --cp-text: #e2e8f0;
+  --cp-text-muted: #94a3b8;
   --cp-primary: #0f766e;
-  --cp-primary-deep: #155e75;
+  --cp-primary-deep: #14b8a6;
+  --cp-primary-glow: rgba(15, 118, 110, 0.4);
   --cp-accent: #f59e0b;
-  --cp-border: rgba(16, 42, 34, 0.12);
-  --cp-shadow-lg: 0 20px 45px rgba(11, 38, 29, 0.14);
-  --cp-shadow-sm: 0 8px 18px rgba(11, 38, 29, 0.08);
+  --cp-neon-blue: #3b82f6;
+  --cp-neon-purple: #8b5cf6;
+  --cp-glass-bg: rgba(255, 255, 255, 0.08);
+  --cp-glass-border: rgba(255, 255, 255, 0.15);
+  --cp-border: rgba(255, 255, 255, 0.15);
+  --cp-shadow-lg: 0 20px 45px rgba(15, 118, 110, 0.2);
+  --cp-shadow-sm: 0 8px 18px rgba(15, 118, 110, 0.15);
+  --cp-shadow-glow: 0 0 30px rgba(15, 118, 110, 0.3);
   --cp-radius-lg: 20px;
   --cp-radius-md: 14px;
 }
@@ -114,7 +125,7 @@ export default {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--cp-text);
-  background-color: var(--cp-bg);
+  background: linear-gradient(135deg, #0a0f1a 0%, #1a1f3a 50%, #0f1a2a 100%);
   min-height: 100vh;
   position: relative;
   overflow: hidden;
@@ -136,7 +147,7 @@ export default {
 .orb-a {
   width: 420px;
   height: 420px;
-  background: radial-gradient(circle at 30% 30%, rgba(15, 118, 110, 0.24), rgba(15, 118, 110, 0));
+  background: radial-gradient(circle at 30% 30%, rgba(15, 118, 110, 0.3), rgba(139, 92, 246, 0.15), transparent);
   top: -120px;
   left: -80px;
   animation: float-slow 11s ease-in-out infinite;
@@ -145,7 +156,7 @@ export default {
 .orb-b {
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle at 65% 40%, rgba(21, 94, 117, 0.2), rgba(21, 94, 117, 0));
+  background: radial-gradient(circle at 65% 40%, rgba(59, 130, 246, 0.25), rgba(15, 118, 110, 0.15), transparent);
   right: -150px;
   bottom: -150px;
   animation: float-slow 13s ease-in-out infinite reverse;
@@ -154,10 +165,10 @@ export default {
 .grid-pattern {
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(rgba(21, 94, 117, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(21, 94, 117, 0.05) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(15, 118, 110, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 118, 110, 0.08) 1px, transparent 1px);
   background-size: 36px 36px;
-  mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.8), transparent 75%);
+  mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.6), transparent 75%);
 }
 
 .app-shell {
@@ -176,10 +187,11 @@ export default {
   padding: 0 28px;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.24);
-  background: linear-gradient(112deg, #0f766e 0%, #155e75 58%, #1d4d78 100%);
-  box-shadow: 0 8px 26px rgba(10, 44, 36, 0.24);
-  backdrop-filter: saturate(1.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.4), rgba(139, 92, 246, 0.3));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 0 30px rgba(15, 118, 110, 0.3);
 }
 
 .header-content {
@@ -230,16 +242,19 @@ export default {
 }
 
 .tab-shell {
-  background: var(--cp-surface);
-  border: 1px solid var(--cp-border);
-  box-shadow: var(--cp-shadow-lg);
+  background: var(--cp-glass-bg);
+  border: 1px solid var(--cp-glass-border);
+  box-shadow: var(--cp-shadow-glow);
   border-radius: var(--cp-radius-lg);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   padding: 14px 16px 18px;
 }
 
 .app-footer {
-  background: linear-gradient(120deg, #0f766e 0%, #134e68 100%);
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.35), rgba(139, 92, 246, 0.25));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   color: rgba(255, 255, 255, 0.86);
   height: 48px !important;
   display: flex;
@@ -247,7 +262,7 @@ export default {
   justify-content: center;
   font-size: 12px;
   letter-spacing: 0.02em;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 ::v-deep .app-tabs > .el-tabs__header {
@@ -255,7 +270,7 @@ export default {
 }
 
 ::v-deep .app-tabs > .el-tabs__header .el-tabs__nav-wrap::after {
-  background-color: rgba(16, 42, 34, 0.12);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 ::v-deep .app-tabs > .el-tabs__header .el-tabs__item {
@@ -270,13 +285,14 @@ export default {
 
 ::v-deep .app-tabs > .el-tabs__header .el-tabs__item:focus,
 ::v-deep .app-tabs > .el-tabs__header .el-tabs__item:focus-visible {
-  outline: 2px solid rgba(15, 118, 110, 0.38);
+  outline: 2px solid rgba(15, 118, 110, 0.5);
   outline-offset: -2px;
 }
 
 ::v-deep .app-tabs > .el-tabs__header .el-tabs__item.is-active {
   color: var(--cp-primary-deep);
-  background: var(--cp-surface-strong);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 15px rgba(15, 118, 110, 0.3);
 }
 
 ::v-deep .app-tabs > .el-tabs__header .el-tabs__item:hover {
@@ -284,38 +300,45 @@ export default {
 }
 
 ::v-deep .el-card {
-  border: 1px solid var(--cp-border);
+  border: 1px solid var(--cp-glass-border);
   box-shadow: var(--cp-shadow-sm);
   border-radius: var(--cp-radius-md);
   overflow: hidden;
+  background: var(--cp-glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 ::v-deep .el-card__header {
-  background: linear-gradient(180deg, rgba(15, 118, 110, 0.06), rgba(15, 118, 110, 0.02));
-  border-bottom: 1px solid rgba(16, 42, 34, 0.08);
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.25), rgba(139, 92, 246, 0.15));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding: 16px 20px;
 }
 
 ::v-deep .el-card__body {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(15, 23, 42, 0.6);
 }
 
 ::v-deep .el-button--primary {
-  background: linear-gradient(130deg, #0f766e 0%, #155e75 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
   border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 10px rgba(15, 118, 110, 0.3);
 }
 
 ::v-deep .el-button--primary:hover {
-  background: linear-gradient(130deg, #0d6560 0%, #124e66 100%);
+  background: linear-gradient(135deg, #0d6560 0%, #0f9f8f 100%);
+  box-shadow: 0 0 20px rgba(15, 118, 110, 0.5);
 }
 
 ::v-deep .el-button--success {
-  background: linear-gradient(130deg, #0f766e 0%, #14b8a6 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
   border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 10px rgba(15, 118, 110, 0.3);
 }
 
 ::v-deep .el-button--success:hover {
-  background: linear-gradient(130deg, #0d6560 0%, #0d9f90 100%);
+  background: linear-gradient(135deg, #0d6560 0%, #0d9f90 100%);
+  box-shadow: 0 0 20px rgba(15, 118, 110, 0.5);
 }
 
 ::v-deep .el-button {
