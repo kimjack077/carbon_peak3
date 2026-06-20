@@ -1,15 +1,17 @@
 # 碳管理预测分析平台
 
-> 基于 LEAP & Kaya 双模型情景模拟的碳排放预测与分析系统
+> 基于 LEAP、Kaya & STIRPAT 三模型情景模拟的碳排放预测与分析系统
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
 [![Vue.js](https://img.shields.io/badge/Vue.js-2.x-brightgreen.svg)](https://vuejs.org)
 [![Flask](https://img.shields.io/badge/Flask-2.x-red.svg)](https://flask.palletsprojects.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+🔗 **在线演示**：[http://49.232.213.79:56789](http://49.232.213.79:56789)
+
 ## 产品简介
 
-碳管理预测分析平台面向企业碳资产管理人员，通过历史能耗数据建立双模型预测体系，支持多情景分析与碳达峰时间识别，为企业碳中和路径规划提供科学决策支持。
+碳管理预测分析平台面向企业碳资产管理人员，通过历史能耗数据建立三模型预测体系（LEAP、Kaya、STIRPAT），支持多情景分析与碳达峰时间识别，为企业碳中和路径规划提供科学决策支持。
 
 **核心价值：**
 
