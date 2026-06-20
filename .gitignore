@@ -284,7 +284,14 @@ start_simple.bat
 restart_backend.bat
 push_to_github.bat
 
-# Deploy scripts
+# Design documents (internal)
+碳管理预测分析平台_PRD_v1.0.docx
+碳管理预测分析平台_PRD_v2.0.md
+
+# Internal planning docs
+docs/
+
+# Deploy scripts (contain server credentials)
 deploy*.py
 deploy_server.bat
 deploy_server.sh
