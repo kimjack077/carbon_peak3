@@ -301,6 +301,11 @@ deploy_server.sh
 # Claude Code / OpenCode
 .claude/
 .opencode/
+CLAUDE.md
+
+# Startup scripts
+start.bat
+start.sh
 
 # Temporary documentation and debug files
 debug_*.txt
