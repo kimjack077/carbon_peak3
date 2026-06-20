@@ -303,10 +303,6 @@ deploy_server.sh
 .opencode/
 CLAUDE.md
 
-# Startup scripts
-start.bat
-start.sh
-
 # Temporary documentation and debug files
 debug_*.txt
 *说明.md
