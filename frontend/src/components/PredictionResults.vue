@@ -1,119 +1,138 @@
-﻿<template>
+<template>
   <div class="prediction-results">
-    <el-row :gutter="24">
-      <el-col :span="24">
-        <el-card class="chart-card" shadow="hover">
-          <div slot="header" class="card-header">
-            <span class="card-title">碳排放达峰预测</span>
-            <div class="peak-summary" v-if="peakSummaries.length > 0">
-              <el-tag
-                v-for="summary in peakSummaries"
-                :key="summary.name"
-                :type="summary.type"
-                size="small"
-                class="peak-tag"
-              >
-                {{ summary.name }}: {{ summary.year }}年达峰
-              </el-tag>
-            </div>
-          </div>
+    <!-- 顶部指标卡片 -->
+    <div class="metrics-bar" v-if="metricCardsData.length > 0">
+      <div class="metric-item" v-for="(metric, idx) in metricCardsData" :key="idx">
+        <div class="metric-icon">
+          <svg v-if="idx === 0" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <svg v-else-if="idx === 1" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <svg v-else-if="idx === 2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="metric-info">
+          <div class="metric-value">{{ metric.value }}</div>
+          <div class="metric-label">{{ metric.label }}</div>
+        </div>
+      </div>
+    </div>
 
-          <div v-if="loading" class="loading-container">
-            <i class="el-icon-loading"></i>
-            <p>正在生成预测结果...</p>
-          </div>
-          <div v-else-if="error" class="error-container">
-            <i class="el-icon-warning"></i>
-            <p>{{ error }}</p>
-            <el-button type="primary" @click="runAutoPrediction">重新运行预测</el-button>
-          </div>
-          <div v-else>
-            <metric-card v-if="metricCardsData.length > 0" :metrics="metricCardsData"></metric-card>
-            <div class="chart-container">
-              <div id="carbon-peak-chart" class="echarts-container"></div>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+    <!-- 主图表：碳排放达峰预测 -->
+    <div class="chart-section main-chart">
+      <div class="section-header">
+        <div class="section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <span>碳排放达峰预测</span>
+        </div>
+        <div class="peak-tags" v-if="peakSummaries.length > 0">
+          <span
+            v-for="summary in peakSummaries"
+            :key="summary.name"
+            :class="['peak-badge', summary.type]"
+          >
+            {{ summary.name }}: {{ summary.year }}年达峰
+          </span>
+        </div>
+      </div>
 
-    <el-row :gutter="24" style="margin-top: 24px;">
-      <el-col :xs="24" :sm="24" :md="12" :lg="12">
-        <el-card class="chart-card" shadow="hover">
-          <div slot="header" class="card-header">
-            <span class="card-title">GDP预测</span>
-          </div>
-          <div class="chart-container">
-            <div id="gdp-chart" class="echarts-container"></div>
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :xs="24" :sm="24" :md="12" :lg="12">
-        <el-card class="chart-card" shadow="hover">
-          <div slot="header" class="card-header">
-            <span class="card-title">能源消费结构</span>
-            <el-radio-group v-model="energyChartType" size="small">
-              <el-radio-button label="stack">堆叠柱状图</el-radio-button>
-              <el-radio-button label="line">趋势图</el-radio-button>
-            </el-radio-group>
-          </div>
-          <div class="chart-container">
-            <div id="energy-chart" class="echarts-container"></div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+      <div v-if="loading" class="loading-state">
+        <span>正在加载预测数据...</span>
+      </div>
+      <div v-else-if="error" class="error-state">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p>{{ error }}</p>
+        <el-button type="primary" size="small" @click="runAutoPrediction">重新运行预测</el-button>
+      </div>
+      <div v-else class="chart-wrapper">
+        <div id="carbon-peak-chart" class="echarts-container"></div>
+      </div>
+    </div>
 
-    <el-row :gutter="24" style="margin-top: 24px;">
-      <el-col :span="24">
-        <el-card class="data-card" shadow="hover">
-          <div slot="header" class="card-header">
-            <span class="card-title">预测数据详情</span>
-            <el-select v-model="selectedScenario" placeholder="选择情景" size="small" @change="loadScenarioResults">
-              <el-option v-for="scenario in scenarios" :key="scenario" :label="scenario" :value="scenario"></el-option>
-            </el-select>
+    <!-- 次级图表 -->
+    <div class="chart-row">
+      <div class="chart-section">
+        <div class="section-header">
+          <div class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>GDP预测</span>
           </div>
-          <el-table v-if="scenarioResults.length > 0" :data="scenarioResults" style="width: 100%" height="400" border stripe>
-            <el-table-column prop="year" label="年份" width="80" fixed="left" align="center"></el-table-column>
-            <el-table-column prop="data_type" label="类型" width="80" align="center">
-              <template slot-scope="scope">
-                <el-tag :type="scope.row.data_type === 'historical' ? 'info' : 'success'" size="mini">
-                  {{ scope.row.data_type === 'historical' ? '历史' : '预测' }}
-                </el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="gdp" label="GDP(万元)" min-width="140" align="right">
-              <template slot-scope="scope">{{ formatNumber(scope.row.gdp) }}</template>
-            </el-table-column>
-            <el-table-column prop="energy_consumption" label="能源消费(万吨标煤)" min-width="150" align="right">
-              <template slot-scope="scope">{{ formatNumber(scope.row.energy_consumption) }}</template>
-            </el-table-column>
-            <el-table-column prop="co2_emission" label="CO2排放(万吨)" min-width="130" align="right">
-              <template slot-scope="scope">{{ formatNumber(scope.row.co2_emission) }}</template>
-            </el-table-column>
-          </el-table>
-          <div v-else class="empty-data">
-            <i class="el-icon-info"></i>
-            <p>暂无预测数据，请先运行预测</p>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
+        <div class="chart-wrapper">
+          <div id="gdp-chart" class="echarts-container small"></div>
+        </div>
+      </div>
 
-    <el-row style="margin-top: 24px;">
-      <el-col :span="24" style="text-align: center;">
-        <el-button type="primary" icon="el-icon-download" @click="downloadResults">下载预测结果</el-button>
-        <el-button type="success" icon="el-icon-picture" @click="saveCharts">导出图表</el-button>
-        <el-button icon="el-icon-back" @click="goToScenarios">返回情景设置</el-button>
-      </el-col>
-    </el-row>
+      <div class="chart-section">
+        <div class="section-header">
+          <div class="section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>能源消费结构</span>
+          </div>
+          <div class="chart-toggle">
+            <button
+              :class="['toggle-btn', { active: energyChartType === 'stack' }]"
+              @click="energyChartType = 'stack'"
+            >堆叠柱状图</button>
+            <button
+              :class="['toggle-btn', { active: energyChartType === 'line' }]"
+              @click="energyChartType = 'line'"
+            >趋势图</button>
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <div id="energy-chart" class="echarts-container small"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 数据详情 -->
+    <div class="chart-section data-section">
+      <div class="section-header">
+        <div class="section-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span>预测数据详情</span>
+        </div>
+        <el-select v-model="selectedScenario" placeholder="选择情景" size="small" @change="loadScenarioResults" class="scenario-select">
+          <el-option v-for="scenario in scenarios" :key="scenario" :label="scenario" :value="scenario"></el-option>
+        </el-select>
+      </div>
+
+      <el-table v-if="scenarioResults.length > 0" :data="scenarioResults" style="width: 100%" height="360" border stripe>
+        <el-table-column prop="year" label="年份" width="80" fixed="left" align="center"></el-table-column>
+        <el-table-column prop="data_type" label="类型" width="80" align="center">
+          <template slot-scope="scope">
+            <el-tag :type="scope.row.data_type === 'historical' ? 'info' : 'success'" size="mini">
+              {{ scope.row.data_type === 'historical' ? '历史' : '预测' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="gdp" label="GDP(万元)" min-width="140" align="right">
+          <template slot-scope="scope">{{ formatNumber(scope.row.gdp) }}</template>
+        </el-table-column>
+        <el-table-column prop="energy_consumption" label="能源消费(万吨标煤)" min-width="150" align="right">
+          <template slot-scope="scope">{{ formatNumber(scope.row.energy_consumption) }}</template>
+        </el-table-column>
+        <el-table-column prop="co2_emission" label="CO₂排放(万吨)" min-width="130" align="right">
+          <template slot-scope="scope">{{ formatNumber(scope.row.co2_emission) }}</template>
+        </el-table-column>
+      </el-table>
+      <div v-else class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <p>暂无预测数据，请先运行预测</p>
+      </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="actions-bar">
+      <el-button type="primary" icon="el-icon-download" @click="downloadResults">下载预测结果</el-button>
+      <el-button type="success" icon="el-icon-picture" @click="saveCharts">导出图表</el-button>
+      <el-button icon="el-icon-back" @click="goToScenarios">返回情景设置</el-button>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import * as echarts from 'echarts'
-import MetricCard from './MetricCard.vue'
 import { themeStore } from '@/store/themeStore'
 
 const COLORS = {
@@ -128,9 +147,6 @@ function hasArray(data, key) {
 
 export default {
   name: 'PredictionResults',
-  components: {
-    MetricCard
-  },
   props: {
     isActive: {
       type: Boolean,
@@ -157,49 +173,36 @@ export default {
       const metrics = []
       const scenarioKeys = Object.keys(this.chartData)
 
-      // 达峰年份
       const firstPeak = this.peakSummaries[0]
       if (firstPeak) {
         metrics.push({
           label: '预测达峰年份',
-          value: firstPeak.year + '年',
-          unit: '',
-          trend: 'down',
-          trendClass: 'down'
+          value: firstPeak.year + '年'
         })
       }
 
-      // 排放峰值
       const firstScenario = this.chartData[scenarioKeys[0]]
-      if (firstScenario && firstScenario.peak) {
+      const peakEmissionRaw = (firstScenario && firstScenario.peak && (firstScenario.peak.emission || firstScenario.peak.value)) || 0
+      if (firstScenario && firstScenario.peak && peakEmissionRaw > 0) {
         metrics.push({
           label: '排放峰值',
-          value: Math.round(firstScenario.peak.emission).toLocaleString(),
-          unit: '万吨CO₂',
-          trend: null
+          value: Math.round(peakEmissionRaw).toLocaleString() + '万吨'
         })
       }
 
-      // 减排幅度 (计算从峰值到终点)
-      if (firstScenario && firstScenario.emissions) {
-        const peakEmission = (firstScenario.peak && firstScenario.peak.emission) || 0
+      if (firstScenario && firstScenario.emissions && peakEmissionRaw > 0) {
+        const peakEmission = peakEmissionRaw
         const lastEmission = firstScenario.emissions[firstScenario.emissions.length - 1] || 0
         const reduction = ((peakEmission - lastEmission) / peakEmission * 100).toFixed(1)
         metrics.push({
           label: '减排幅度',
-          value: reduction + '%',
-          unit: '预测下降',
-          trend: parseFloat(reduction) > 0 ? 'down' : 'up',
-          trendClass: parseFloat(reduction) > 0 ? 'down' : 'up'
+          value: reduction + '%'
         })
       }
 
-      // 情景数量
       metrics.push({
         label: '预测情景',
-        value: scenarioKeys.length + '个',
-        unit: '已创建',
-        trend: null
+        value: scenarioKeys.length + '个'
       })
 
       return metrics
@@ -225,25 +228,20 @@ export default {
       this.initEnergyChart()
     },
     isActive(active) {
-      if (active && !this.loading && !this.error) {
+      if (active) {
+        this.checkPredictionStatus()
         this.$nextTick(() => {
-          setTimeout(() => {
-            this.initCarbonPeakChart()
-            this.initGdpChart()
-            this.initEnergyChart()
-            this.handleResize()
-          }, 120)
+          setTimeout(() => this.handleResize(), 300)
         })
       }
     },
     isDark() {
-      // 主题变化时重绘所有图表
       this.$nextTick(() => {
         setTimeout(() => {
           this.initCarbonPeakChart()
           this.initGdpChart()
           this.initEnergyChart()
-        }, 300) // 等待 CSS 过渡完成
+        }, 300)
       })
     }
   },
@@ -342,13 +340,14 @@ export default {
     },
     calculatePeakSummaries() {
       this.peakSummaries = []
+      const types = ['success', 'primary', 'warning', 'danger', 'info']
       Object.keys(this.chartData).forEach((name, index) => {
         const item = this.chartData[name]
         if (item && item.peak) {
           this.peakSummaries.push({
             name,
             year: item.peak.year,
-            type: index === 0 ? 'success' : index === 1 ? 'primary' : 'warning'
+            type: types[index % types.length]
           })
         }
       })
@@ -391,23 +390,41 @@ export default {
         })
       })
 
+      const textColor = this.isDark ? '#e6edf3' : '#475569'
+      const lineColor = this.isDark ? '#30363d' : '#E2E8F0'
+
       this.carbonPeakChart.setOption({
-        title: { text: '碳排放达峰预测', left: 'center' },
+        backgroundColor: 'transparent',
         tooltip: {
           trigger: 'axis',
-          backgroundColor: this.isDark ? 'rgba(15, 23, 42, 0.9)' : '#ffffff',
-          borderColor: this.isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(15, 118, 110, 0.2)',
-          borderRadius: 12,
-          shadowBlur: this.isDark ? 20 : 8,
-          shadowColor: this.isDark ? 'rgba(15, 118, 110, 0.3)' : 'rgba(15, 118, 110, 0.1)',
-          textStyle: {
-            color: this.isDark ? '#e2e8f0' : '#134e4a'
-          }
+          backgroundColor: this.isDark ? '#1c2128' : '#fff',
+          borderColor: this.isDark ? '#30363d' : '#E2E8F0',
+          textStyle: { color: textColor }
         },
-        legend: { type: 'scroll', top: 30 },
-        grid: { left: '8%', right: '4%', top: '22%', bottom: '12%', containLabel: true },
-        xAxis: { type: 'category', name: '年份', data: yearLabels, boundaryGap: false, axisLabel: { rotate: 35 } },
-        yAxis: { type: 'value', name: '碳排放量(万吨CO2)' },
+        legend: {
+          type: 'scroll',
+          top: 10,
+          textStyle: { color: textColor }
+        },
+        grid: { left: '8%', right: '4%', top: '15%', bottom: '12%', containLabel: true },
+        xAxis: {
+          type: 'category',
+          name: '年份',
+          data: yearLabels,
+          boundaryGap: false,
+          axisLabel: { rotate: 35, color: textColor },
+          axisLine: { lineStyle: { color: lineColor } }
+        },
+        yAxis: {
+          type: 'value',
+          name: '碳排放量(万吨CO₂)',
+          axisLabel: { color: textColor },
+          splitLine: { lineStyle: { color: lineColor } }
+        },
+        animationDuration: 2000,
+        animationEasing: 'cubicOut',
+        animationDurationUpdate: 1000,
+        animationEasingUpdate: 'cubicOut',
         series
       })
     },
@@ -449,23 +466,39 @@ export default {
         })
       })
 
+      const textColor = this.isDark ? '#e6edf3' : '#475569'
+      const lineColor = this.isDark ? '#30363d' : '#E2E8F0'
+
       this.gdpChart.setOption({
-        title: { text: 'GDP预测', left: 'center' },
+        backgroundColor: 'transparent',
         tooltip: {
           trigger: 'axis',
-          backgroundColor: this.isDark ? 'rgba(15, 23, 42, 0.9)' : '#ffffff',
-          borderColor: this.isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(15, 118, 110, 0.2)',
-          borderRadius: 12,
-          shadowBlur: this.isDark ? 20 : 8,
-          shadowColor: this.isDark ? 'rgba(15, 118, 110, 0.3)' : 'rgba(15, 118, 110, 0.1)',
-          textStyle: {
-            color: this.isDark ? '#e2e8f0' : '#134e4a'
-          }
+          backgroundColor: this.isDark ? '#1c2128' : '#fff',
+          borderColor: this.isDark ? '#30363d' : '#E2E8F0',
+          textStyle: { color: textColor }
         },
-        legend: { type: 'scroll', top: 30 },
-        grid: { left: '10%', right: '4%', top: '22%', bottom: '12%', containLabel: true },
-        xAxis: { type: 'category', name: '年份', data: yearLabels, boundaryGap: false, axisLabel: { rotate: 35 } },
-        yAxis: { type: 'value', name: 'GDP(万元)' },
+        legend: {
+          type: 'scroll',
+          top: 10,
+          textStyle: { color: textColor }
+        },
+        grid: { left: '10%', right: '4%', top: '15%', bottom: '12%', containLabel: true },
+        xAxis: {
+          type: 'category',
+          name: '年份',
+          data: yearLabels,
+          boundaryGap: false,
+          axisLabel: { rotate: 35, color: textColor },
+          axisLine: { lineStyle: { color: lineColor } }
+        },
+        yAxis: {
+          type: 'value',
+          name: 'GDP(万元)',
+          axisLabel: { color: textColor },
+          splitLine: { lineStyle: { color: lineColor } }
+        },
+        animationDuration: 2000,
+        animationEasing: 'cubicOut',
         series
       })
     },
@@ -536,24 +569,37 @@ export default {
         }
       ]
 
+      const textColor = this.isDark ? '#e6edf3' : '#475569'
+      const lineColor = this.isDark ? '#30363d' : '#E2E8F0'
+
       this.energyChart.setOption({
-        title: { text: `能源消费结构（${firstScenario}）`, left: 'center' },
+        backgroundColor: 'transparent',
         tooltip: {
           trigger: 'axis',
           axisPointer: { type: 'shadow' },
-          backgroundColor: this.isDark ? 'rgba(15, 23, 42, 0.9)' : '#ffffff',
-          borderColor: this.isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(15, 118, 110, 0.2)',
-          borderRadius: 12,
-          shadowBlur: this.isDark ? 20 : 8,
-          shadowColor: this.isDark ? 'rgba(15, 118, 110, 0.3)' : 'rgba(15, 118, 110, 0.1)',
-          textStyle: {
-            color: this.isDark ? '#e2e8f0' : '#134e4a'
-          }
+          backgroundColor: this.isDark ? '#1c2128' : '#fff',
+          borderColor: this.isDark ? '#30363d' : '#E2E8F0',
+          textStyle: { color: textColor }
         },
-        legend: { bottom: 0 },
-        grid: { left: '10%', right: '6%', top: '16%', bottom: '18%', containLabel: true },
-        xAxis: { type: 'category', data: allYears, axisLabel: { rotate: 45 } },
-        yAxis: { type: 'value', name: '能源消费(万吨标煤)' },
+        legend: {
+          bottom: 0,
+          textStyle: { color: textColor }
+        },
+        grid: { left: '10%', right: '6%', top: '10%', bottom: '15%', containLabel: true },
+        xAxis: {
+          type: 'category',
+          data: allYears,
+          axisLabel: { rotate: 45, color: textColor },
+          axisLine: { lineStyle: { color: lineColor } }
+        },
+        yAxis: {
+          type: 'value',
+          name: '能源消费(万吨标煤)',
+          axisLabel: { color: textColor },
+          splitLine: { lineStyle: { color: lineColor } }
+        },
+        animationDuration: 2000,
+        animationEasing: 'cubicOut',
         series
       })
     },
@@ -591,23 +637,39 @@ export default {
         })
       })
 
+      const textColor = this.isDark ? '#e6edf3' : '#475569'
+      const lineColor = this.isDark ? '#30363d' : '#E2E8F0'
+
       this.energyChart.setOption({
-        title: { text: '综合能源消费预测', left: 'center' },
+        backgroundColor: 'transparent',
         tooltip: {
           trigger: 'axis',
-          backgroundColor: this.isDark ? 'rgba(15, 23, 42, 0.9)' : '#ffffff',
-          borderColor: this.isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(15, 118, 110, 0.2)',
-          borderRadius: 12,
-          shadowBlur: this.isDark ? 20 : 8,
-          shadowColor: this.isDark ? 'rgba(15, 118, 110, 0.3)' : 'rgba(15, 118, 110, 0.1)',
-          textStyle: {
-            color: this.isDark ? '#e2e8f0' : '#134e4a'
-          }
+          backgroundColor: this.isDark ? '#1c2128' : '#fff',
+          borderColor: this.isDark ? '#30363d' : '#E2E8F0',
+          textStyle: { color: textColor }
         },
-        legend: { type: 'scroll', top: 30 },
-        grid: { left: '10%', right: '4%', top: '22%', bottom: '12%', containLabel: true },
-        xAxis: { type: 'category', name: '年份', data: yearLabels, boundaryGap: false, axisLabel: { rotate: 35 } },
-        yAxis: { type: 'value', name: '能源消费(万吨标煤)' },
+        legend: {
+          type: 'scroll',
+          top: 10,
+          textStyle: { color: textColor }
+        },
+        grid: { left: '10%', right: '4%', top: '15%', bottom: '12%', containLabel: true },
+        xAxis: {
+          type: 'category',
+          name: '年份',
+          data: yearLabels,
+          boundaryGap: false,
+          axisLabel: { rotate: 35, color: textColor },
+          axisLine: { lineStyle: { color: lineColor } }
+        },
+        yAxis: {
+          type: 'value',
+          name: '能源消费(万吨标煤)',
+          axisLabel: { color: textColor },
+          splitLine: { lineStyle: { color: lineColor } }
+        },
+        animationDuration: 2000,
+        animationEasing: 'cubicOut',
         series
       })
     },
@@ -692,94 +754,279 @@ export default {
   margin-bottom: 20px;
 }
 
-.chart-card,
-.data-card {
-  border-radius: 14px;
-  border: 1px solid rgba(15, 118, 110, 0.14);
+/* 顶部指标栏 */
+.metrics-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
-.card-header {
+.metric-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: 12px;
+  padding: 16px;
+  background: var(--cp-bg-card, #fff);
+  border: 1px solid var(--cp-border-primary, #E2E8F0);
+  border-radius: var(--radius-md, 10px);
+  transition: all 0.2s ease;
+}
+
+.metric-item:hover {
+  box-shadow: var(--cp-shadow-md);
+  border-color: var(--cp-border-secondary, #CBD5E1);
+}
+
+.metric-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cp-primary-lightest, #DBEAFE);
+  border-radius: var(--radius-md, 10px);
+  color: var(--cp-primary, #1E40AF);
+}
+
+.metric-info {
+  flex: 1;
+}
+
+.metric-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--cp-text-primary, #0F172A);
+  line-height: 1.2;
+  font-family: var(--font-heading);
+}
+
+.metric-label {
+  font-size: 12px;
+  color: var(--cp-text-muted, #94A3B8);
+  margin-top: 2px;
+}
+
+/* 图表区块 */
+.chart-section {
+  background: var(--cp-bg-card, #fff);
+  border: 1px solid var(--cp-border-primary, #E2E8F0);
+  border-radius: var(--radius-lg, 16px);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  background: var(--cp-bg-secondary, #F1F5F9);
+  border-bottom: 1px solid var(--cp-border-primary, #E2E8F0);
   flex-wrap: wrap;
+  gap: 10px;
 }
 
-.card-title {
-  font-size: 16px;
-  font-weight: 800;
-  color: #124e66;
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cp-text-primary, #0F172A);
+  font-family: var(--font-heading);
 }
 
-.peak-summary {
+.section-title svg {
+  color: var(--cp-primary, #1E40AF);
+}
+
+.chart-wrapper {
+  padding: 16px;
+}
+
+.echarts-container {
+  width: 100% !important;
+  height: 400px !important;
+}
+
+.echarts-container.small {
+  height: 320px !important;
+}
+
+/* 双图表行 */
+.chart-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.chart-row .chart-section {
+  margin-bottom: 0;
+}
+
+/* 达峰标签 */
+.peak-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.chart-container {
-  width: 100%;
-  min-height: 300px;
+.peak-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-full, 9999px);
+  background: var(--cp-success-light, #D1FAE5);
+  color: var(--cp-success, #059669);
+  border: 1px solid var(--cp-success-light, #D1FAE5);
 }
 
-.echarts-container {
-  width: 100% !important;
-  height: 450px !important;
-  min-height: 400px !important;
-  border-radius: 12px;
+.peak-badge.primary {
+  background: var(--cp-info-light, #DBEAFE);
+  color: var(--cp-info, #2563EB);
+  border-color: var(--cp-info-light, #DBEAFE);
 }
 
-.loading-container,
-.error-container,
-.empty-data {
+.peak-badge.warning {
+  background: var(--cp-warning-light, #FEF3C7);
+  color: var(--cp-warning, #D97706);
+  border-color: var(--cp-warning-light, #FEF3C7);
+}
+
+/* 图表切换 */
+.chart-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--cp-bg-tertiary, #E2E8F0);
+  border-radius: var(--radius-sm, 6px);
+  padding: 3px;
+}
+
+.toggle-btn {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: var(--cp-text-secondary, #475569);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-body);
+}
+
+.toggle-btn.active {
+  background: var(--cp-bg-card, #fff);
+  color: var(--cp-primary, #1E40AF);
+  box-shadow: var(--cp-shadow-xs);
+}
+
+.toggle-btn:hover:not(.active) {
+  color: var(--cp-text-primary, #0F172A);
+}
+
+/* 场景选择器 */
+.scenario-select {
+  min-width: 180px;
+}
+
+/* 加载状态 */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--cp-text-muted, #94A3B8);
+  font-size: 14px;
+}
+
+/* 错误状态 */
+.error-state {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  min-height: 300px;
-  color: #909399;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--cp-text-muted, #94A3B8);
+  gap: 12px;
 }
 
-.loading-container i,
-.error-container i,
-.empty-data i {
-  font-size: 40px;
-  margin-bottom: 10px;
+.error-state svg {
+  color: var(--cp-warning, #D97706);
 }
 
-::v-deep .el-radio-button__orig-radio:checked + .el-radio-button__inner {
-  background-color: #0f766e;
-  border-color: #0f766e;
-  box-shadow: -1px 0 0 0 #0f766e;
+.error-state p {
+  font-size: 14px;
+  margin: 0;
 }
 
-::v-deep .el-table th {
-  background-color: rgba(20, 184, 166, 0.08);
-  color: #124e66;
-  font-weight: 700;
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--cp-text-muted, #94A3B8);
+  gap: 12px;
 }
 
-::v-deep .el-table--border::after,
-::v-deep .el-table--group::after,
-::v-deep .el-table::before {
-  background-color: rgba(15, 118, 110, 0.2);
+.empty-state svg {
+  opacity: 0.5;
 }
 
+.empty-state p {
+  font-size: 14px;
+  margin: 0;
+}
+
+/* 操作栏 */
+.actions-bar {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px 0 10px;
+}
+
+/* 响应式 */
 @media (max-width: 992px) {
-  .prediction-results ::v-deep .el-col {
-    margin-bottom: 12px;
+  .metrics-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .chart-row {
+    grid-template-columns: 1fr;
   }
 
   .echarts-container {
     height: 320px !important;
-    min-height: 300px !important;
   }
 
-  .loading-container,
-  .error-container,
-  .empty-data {
-    min-height: 220px;
+  .echarts-container.small {
+    height: 280px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .metrics-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actions-bar {
+    flex-direction: column;
+  }
+
+  .actions-bar .el-button {
+    width: 100%;
   }
 }
 </style>

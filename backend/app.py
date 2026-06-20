@@ -424,7 +424,13 @@ def get_chart_data():
             )
 
             emissions_series = df[emission_col].dropna()
-            if len(emissions_series) > 0:
+            peak_status = "unknown"
+            if "is_peak" in df.columns and df["is_peak"].fillna(False).astype(bool).any():
+                peak_idx = df.index[df["is_peak"].fillna(False).astype(bool)][0]
+                peak_year = int(df.loc[peak_idx, "year"])
+                peak_value = float(df.loc[peak_idx, emission_col])
+                peak_status = "model_marked"
+            elif len(emissions_series) > 0:
                 peak_idx = emissions_series.idxmax()
                 peak_year = int(df.loc[peak_idx, "year"])
                 peak_value = float(df.loc[peak_idx, emission_col])
@@ -440,7 +446,7 @@ def get_chart_data():
                 "historical_emissions": historical_emissions,
                 "historical_gdp": historical_gdp,
                 "historical_energy": historical_energy,
-                "peak": {"year": peak_year, "value": peak_value},
+                "peak": {"year": peak_year, "value": peak_value, "status": peak_status},
                 "model_type": scenarios[scenario_name].get("model_type", "leap"),
                 "energy_mix": {
                     "total": df["energy_consumption"].tolist()
@@ -501,7 +507,7 @@ def get_trends():
 
 @app.route("/api/upload/custom", methods=["POST"])
 def upload_custom_data():
-    """Upload custom CSV data"""
+    """Upload custom data (supports CSV and Excel)"""
     if "file" not in request.files:
         return jsonify({"error": "No file part"}), 400
 
@@ -509,21 +515,101 @@ def upload_custom_data():
     if file.filename == "":
         return jsonify({"error": "No selected file"}), 400
 
-    file_path = os.path.join(DATA_DIR, "base_year_data.csv")
-    file.save(file_path)
+    filename = file.filename.lower()
+    data_path = os.path.join(DATA_DIR, "base_year_data.csv")
 
     try:
-        processor = SimpleDataProcessor(file_path)
+        # 根据文件类型读取数据
+        if filename.endswith(('.xlsx', '.xls')):
+            # Excel文件先转为CSV保存
+            df = pd.read_excel(file)
+            df.to_csv(data_path, index=False)
+        elif filename.endswith('.csv'):
+            file.save(data_path)
+            df = pd.read_csv(data_path)
+        else:
+            return jsonify({"error": "不支持的文件格式，请上传CSV或Excel文件"}), 400
+
+        # 标准化列名
+        df.columns = [col.strip().lower() for col in df.columns]
+
+        # 列名映射
+        col_mapping = {
+            '年份': 'year', '年': 'year',
+            'gdp': 'gdp', '生产总值': 'gdp', '国内生产总值': 'gdp',
+            '能源消费': 'energy_consumption', '能耗': 'energy_consumption', '能源消耗': 'energy_consumption',
+            'co2排放': 'co2_emission', '碳排放': 'co2_emission', 'co2': 'co2_emission', '二氧化碳': 'co2_emission',
+            '可再生能源占比': 'renewable_ratio', '可再生能源': 'renewable_ratio', '新能源占比': 'renewable_ratio'
+        }
+
+        df = df.rename(columns={k: v for k, v in col_mapping.items() if k in df.columns})
+        df.to_csv(data_path, index=False)
+
+        processor = SimpleDataProcessor(data_path)
         data = processor.load_data()
-        df = pd.read_csv(file_path)
+
+        # 获取部门信息
+        sectors = []
+        if "sector" in df.columns:
+            sectors = df["sector"].unique().tolist()[:10]
+
         return jsonify({
-            "message": "Custom data uploaded successfully",
+            "message": "数据上传成功",
             "rows": len(data),
             "years": [int(df["year"].min()), int(df["year"].max())],
-            "data": df.to_dict(orient="records")[:10]
+            "sectors": sectors,
+            "data": df.head(10).to_dict(orient="records")
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/data/current", methods=["GET"])
+def get_current_data():
+    """获取当前加载的数据"""
+    data_path = os.path.join(DATA_DIR, "base_year_data.csv")
+    if not os.path.exists(data_path):
+        return jsonify({"rows": 0, "data": []})
+
+    try:
+        df = pd.read_csv(data_path)
+        # 获取部门信息（如果有sector列）
+        sectors = []
+        if "sector" in df.columns:
+            sectors = df["sector"].unique().tolist()[:10]
+
+        return jsonify({
+            "rows": len(df),
+            "years": [int(df["year"].min()), int(df["year"].max())],
+            "sectors": sectors,
+            "data": df.head(10).to_dict(orient="records")
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/download/sample", methods=["GET"])
+def download_sample():
+    """下载样例数据文件"""
+    sample_data = {
+        "year": [2018, 2019, 2020, 2021, 2022, 2023],
+        "gdp": [50000, 54000, 52000, 57000, 61000, 65000],
+        "energy_consumption": [3200, 3350, 3280, 3450, 3580, 3700],
+        "co2_emission": [5200, 5400, 5100, 5500, 5700, 5850],
+        "renewable_ratio": [0.08, 0.10, 0.12, 0.14, 0.16, 0.18]
+    }
+    df = pd.DataFrame(sample_data)
+
+    # 保存为Excel
+    output_path = os.path.join(DATA_DIR, "sample_data.xlsx")
+    df.to_excel(output_path, index=False, sheet_name="基础数据")
+
+    return send_file(
+        output_path,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name="碳达峰预测_样例数据.xlsx"
+    )
 
 
 @app.route("/api/data/validate", methods=["POST"])

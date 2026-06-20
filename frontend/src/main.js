@@ -10,7 +10,7 @@ Vue.config.productionTip = false
 Vue.use(ElementUI)
 
 // 配置axios - 使用环境变量
-axios.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || 'http://localhost:5000'
+axios.defaults.baseURL = process.env.VUE_APP_API_BASE_URL !== undefined ? process.env.VUE_APP_API_BASE_URL : 'http://localhost:5000'
 
 new Vue({
   render: h => h(App),

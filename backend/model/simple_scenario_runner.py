@@ -13,9 +13,9 @@ def run_simple_scenario(base_data, params, horizon_year, historical_data=None):
     model_type = str(params.get("model_type", "leap")).lower()
 
     if model_type == "leap":
-        return run_leap_model(base_data, params, horizon_year)
+        return run_leap_model(base_data, params, horizon_year, historical_data)
     if model_type == "kaya":
-        return run_kaya_model(base_data, params, horizon_year)
+        return run_kaya_model(base_data, params, horizon_year, historical_data)
     if model_type == "stirpat":
         return run_stirpat_model(base_data, params, horizon_year, historical_data)
 

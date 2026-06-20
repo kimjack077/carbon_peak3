@@ -1,66 +1,85 @@
-/* frontend/src/assets/styles/theme-dark.css */
-/* 深色科技风主题 - 玻璃态 */
+/* ============================================
+   Dark Theme - Deep Blue-Black
+   ============================================ */
 
 [data-theme="dark"] {
-  /* 背景色 */
-  --cp-bg-primary: #0a0f1a;
-  --cp-bg-secondary: rgba(15, 23, 42, 0.85);
-  --cp-bg-tertiary: rgba(15, 23, 42, 0.6);
-  --cp-bg-card: rgba(15, 23, 42, 0.85);
-  --cp-bg-header: linear-gradient(135deg, rgba(15, 118, 110, 0.4), rgba(139, 92, 246, 0.3));
-  --cp-bg-footer: linear-gradient(135deg, rgba(15, 118, 110, 0.35), rgba(139, 92, 246, 0.25));
-  --cp-bg-input: rgba(15, 23, 42, 0.6);
-  --cp-bg-table-header: rgba(15, 118, 110, 0.25);
-  --cp-bg-table-row-stripe: rgba(255, 255, 255, 0.05);
-  --cp-bg-hover: rgba(255, 255, 255, 0.1);
-  --cp-bg-active: rgba(255, 255, 255, 0.15);
+  /* ── Primary Colors ── */
+  --cp-primary: #60A5FA;
+  --cp-primary-light: #93C5FD;
+  --cp-primary-lighter: #BFDBFE;
+  --cp-primary-lightest: #1E3A8A;
+  --cp-primary-dark: #3B82F6;
 
-  /* 文字色 */
-  --cp-text-primary: #e2e8f0;
-  --cp-text-secondary: #94a3b8;
-  --cp-text-muted: #64748b;
-  --cp-text-inverse: #0a0f1a;
-  --cp-text-link: #14b8a6;
+  /* ── Accent Colors ── */
+  --cp-accent: #FBBF24;
+  --cp-accent-light: #FDE68A;
+  --cp-accent-lighter: #451A03;
 
-  /* 强调色 */
-  --cp-accent-primary: #14b8a6;
-  --cp-accent-secondary: #0f766e;
-  --cp-accent-gradient: linear-gradient(135deg, #0f766e, #14b8a6);
-  --cp-accent-light: rgba(14, 184, 166, 0.15);
-  --cp-accent-danger: #f87171;
-  --cp-accent-success: #34d399;
-  --cp-accent-warning: #fbbf24;
+  /* ── Semantic Colors ── */
+  --cp-success: #34D399;
+  --cp-success-light: #064E3B;
+  --cp-warning: #FBBF24;
+  --cp-warning-light: #451A03;
+  --cp-danger: #F87171;
+  --cp-danger-light: #7F1D1D;
+  --cp-info: #60A5FA;
+  --cp-info-light: #1E3A8A;
 
-  /* 边框色 */
-  --cp-border-primary: rgba(255, 255, 255, 0.15);
-  --cp-border-secondary: rgba(255, 255, 255, 0.25);
-  --cp-border-focus: rgba(14, 184, 166, 0.5);
-  --cp-border-light: rgba(255, 255, 255, 0.08);
+  /* ── Background Colors ── */
+  --cp-bg-primary: #0B1121;
+  --cp-bg-secondary: #111827;
+  --cp-bg-tertiary: #1F2937;
+  --cp-bg-card: #151F32;
+  --cp-bg-header: #0B1121;
+  --cp-bg-footer: #111827;
+  --cp-bg-input: #1F2937;
+  --cp-bg-table-header: #1F2937;
+  --cp-bg-table-row-stripe: #151F32;
+  --cp-bg-hover: #1F2937;
+  --cp-bg-active: #374151;
+  --cp-bg-overlay: rgba(0, 0, 0, 0.7);
 
-  /* 阴影 */
-  --cp-shadow-sm: 0 4px 12px rgba(15, 118, 110, 0.15);
-  --cp-shadow-md: 0 8px 18px rgba(15, 118, 110, 0.2);
-  --cp-shadow-lg: 0 20px 45px rgba(15, 118, 110, 0.25);
-  --cp-shadow-glow: 0 0 30px rgba(15, 118, 110, 0.3);
+  /* ── Text Colors ── */
+  --cp-text-primary: #F9FAFB;
+  --cp-text-secondary: #D1D5DB;
+  --cp-text-muted: #6B7280;
+  --cp-text-inverse: #111827;
+  --cp-text-link: #60A5FA;
+  --cp-text-on-dark: #F9FAFB;
+  --cp-text-on-dark-secondary: #9CA3AF;
+  --cp-text-on-primary: #FFFFFF;
 
-  /* 图表配色 */
-  --cp-chart-historical: #94a3b8;
-  --cp-chart-gridline: rgba(255, 255, 255, 0.1);
-  --cp-chart-scenario-1: #14b8a6;
-  --cp-chart-scenario-2: #60a5fa;
-  --cp-chart-scenario-3: #fbbf24;
-  --cp-chart-scenario-4: #f87171;
-  --cp-chart-scenario-5: #a78bfa;
-  --cp-chart-scenario-6: #34d399;
+  /* ── Accent Primary (for compatibility) ── */
+  --cp-accent-primary: #60A5FA;
+  --cp-accent-secondary: #93C5FD;
+  --cp-accent-gradient: linear-gradient(135deg, #3B82F6, #60A5FA);
+
+  /* ── Border Colors ── */
+  --cp-border-primary: #1F2937;
+  --cp-border-secondary: #374151;
+  --cp-border-focus: #60A5FA;
+  --cp-border-light: #111827;
+
+  /* ── Shadows ── */
+  --cp-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --cp-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --cp-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --cp-shadow-glow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+
+  /* ── Chart Colors ── */
+  --cp-chart-historical: #6B7280;
+  --cp-chart-gridline: #1F2937;
+  --cp-chart-scenario-1: #60A5FA;
+  --cp-chart-scenario-2: #34D399;
+  --cp-chart-scenario-3: #FBBF24;
+  --cp-chart-scenario-4: #F87171;
+  --cp-chart-scenario-5: #A78BFA;
+  --cp-chart-scenario-6: #22D3EE;
 }
 
-/* 深色主题全局样式 - 保持现有风格 */
+/* Dark theme body */
+[data-theme="dark"] body,
 [data-theme="dark"] #app {
-  background: linear-gradient(135deg, #0a0f1a 0%, #1a1f3a 50%, #0f1a2a 100%);
+  background: var(--cp-bg-primary);
   color: var(--cp-text-primary);
-}
-
-/* 深色主题启用背景动画 */
-[data-theme="dark"] .ambient-bg {
-  display: block;
 }

@@ -1,136 +1,155 @@
-<!-- frontend/src/components/DataImport.vue -->
+<!-- 数据导入组件 - 紧凑版 -->
 <template>
-  <glassmorphic-card>
-    <template #header>
-      <div class="import-header">
-        <h3>数据导入</h3>
-        <help-tooltip content="支持CSV格式，需包含year、gdp、energy_consumption、co2_emission列" />
-      </div>
-    </template>
-
-    <el-upload
-      drag
-      action="#"
-      :auto-upload="false"
-      :on-change="handleFileChange"
-      accept=".csv"
-      :limit="1"
-    >
-      <i class="el-icon-upload"></i>
-      <div class="el-upload__text">拖拽文件到此处，或<em>点击上传</em></div>
-      <template #tip>
-        <div class="el-upload__tip">仅支持 CSV 格式文件</div>
-      </template>
-    </el-upload>
-
-    <div v-if="validationResult" class="validation-result">
-      <el-alert
-        :type="validationResult.valid ? 'success' : 'error'"
-        :title="validationResult.message"
-        show-icon
+  <div class="data-import">
+    <div class="import-row">
+      <el-button type="primary" size="small" icon="el-icon-upload2" @click="triggerUpload">
+        导入数据
+      </el-button>
+      <input
+        ref="fileInput"
+        type="file"
+        accept=".csv,.xlsx,.xls"
+        style="display: none"
+        @change="handleFileChange"
       />
-      <div v-if="validationResult.details" class="validation-details">
-        <p v-for="detail in validationResult.details" :key="detail">{{ detail }}</p>
-      </div>
+      <el-button size="small" icon="el-icon-download" @click.prevent="downloadSample">
+        下载样例
+      </el-button>
+      <span class="file-info" v-if="file">{{ file.name }}</span>
+      <span class="format-hint">支持 CSV / Excel 格式</span>
     </div>
 
-    <template #footer>
-      <el-button type="primary" :disabled="!canUpload" @click="uploadData">
-        确认导入
+    <div v-if="validationResult" :class="['validation-msg', validationResult.valid ? 'success' : 'error']">
+      <i :class="validationResult.valid ? 'el-icon-success' : 'el-icon-error'"></i>
+      <span>{{ validationResult.message }}</span>
+      <el-button v-if="validationResult.valid" type="text" size="mini" @click.prevent="uploadData" :loading="uploading">
+        点击导入
       </el-button>
-    </template>
-  </glassmorphic-card>
+    </div>
+  </div>
 </template>
 
 <script>
 import { dataApi } from '@/utils/api'
-import GlassmorphicCard from './GlassmorphicCard.vue'
-import HelpTooltip from './HelpTooltip.vue'
 
 export default {
   name: 'DataImport',
-  components: { GlassmorphicCard, HelpTooltip },
   data() {
     return {
       file: null,
-      validationResult: null
-    }
-  },
-  computed: {
-    canUpload() {
-      return this.file && this.validationResult && this.validationResult.valid
+      validationResult: null,
+      uploading: false
     }
   },
   methods: {
-    handleFileChange(file) {
-      this.file = file.raw
-      this.validateFile()
+    triggerUpload() {
+      this.$refs.fileInput.click()
     },
-    async validateFile() {
+    handleFileChange(e) {
+      const files = e.target.files
+      if (files && files.length > 0) {
+        this.file = files[0]
+        this.validateFile()
+      }
+      // 清空input，允许重新选择同一文件
+      e.target.value = ''
+    },
+    validateFile() {
       if (!this.file) return
 
-      const reader = new FileReader()
-      reader.onload = async (e) => {
-        try {
-          const text = e.target.result
-          const lines = text.split('\n')
-          const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+      const filename = this.file.name.toLowerCase()
+      const isValidFormat = filename.endsWith('.csv') || filename.endsWith('.xlsx') || filename.endsWith('.xls')
 
-          const requiredCols = ['year', 'gdp', 'energy_consumption', 'co2_emission']
-          const missing = requiredCols.filter(col => !headers.includes(col))
-
-          if (missing.length > 0) {
-            this.validationResult = {
-              valid: false,
-              message: '数据列不完整',
-              details: [`缺少必需列: ${missing.join(', ')}`]
-            }
-          } else {
-            this.validationResult = {
-              valid: true,
-              message: '数据格式正确',
-              details: [`包含 ${lines.length - 1} 条数据记录`]
-            }
-          }
-        } catch (err) {
-          this.validationResult = { valid: false, message: '文件解析失败' }
+      if (!isValidFormat) {
+        this.validationResult = {
+          valid: false,
+          message: '请上传CSV或Excel文件'
         }
+        return
       }
-      reader.readAsText(this.file)
+
+      this.validationResult = {
+        valid: true,
+        message: '已选择: ' + this.file.name
+      }
     },
-    async uploadData() {
-      const formData = new FormData()
+    uploadData() {
+      if (!this.file) return
+
+      this.uploading = true
+      var formData = new FormData()
       formData.append('file', this.file)
 
-      try {
-        await dataApi.uploadCustom(formData)
-        this.$message.success('数据导入成功')
-        this.$emit('data-imported', true)
-      } catch (err) {
-        this.$message.error(err.message || '导入失败')
-      }
+      var self = this
+      dataApi.uploadCustom(formData)
+        .then(function(result) {
+          self.$emit('data-imported', result)
+          self.file = null
+          self.validationResult = null
+          self.$message.success('数据导入成功')
+        })
+        .catch(function(err) {
+          var msg = '导入失败'
+          if (err.response && err.response.data && err.response.data.error) {
+            msg = err.response.data.error
+          } else if (err.message) {
+            msg = err.message
+          }
+          self.$message.error(msg)
+        })
+        .finally(function() {
+          self.uploading = false
+        })
+    },
+    downloadSample(e) {
+      if (e) e.preventDefault()
+      window.open('/api/download/sample', '_blank')
     }
   }
 }
 </script>
 
 <style scoped>
-.import-header {
+.data-import {
+  padding: 0;
+}
+
+.import-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
-.import-header h3 {
-  margin: 0;
-  color: #e2e8f0;
+
+.file-info {
+  font-size: 12px;
+  color: var(--cp-primary, #1E40AF);
+  font-weight: 500;
 }
-.validation-result {
-  margin-top: 16px;
+
+.format-hint {
+  font-size: 11px;
+  color: var(--cp-text-muted, #94A3B8);
 }
-.validation-details {
+
+.validation-msg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 8px;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.validation-msg.success {
+  background: var(--cp-success-light, #D1FAE5);
+  color: var(--cp-success, #059669);
+}
+
+.validation-msg.error {
+  background: var(--cp-danger-light, #FEE2E2);
+  color: var(--cp-danger, #DC2626);
 }
 </style>

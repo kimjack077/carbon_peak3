@@ -284,6 +284,15 @@ start_simple.bat
 restart_backend.bat
 push_to_github.bat
 
+# Deploy scripts
+deploy*.py
+deploy_server.bat
+deploy_server.sh
+
+# Claude Code / OpenCode
+.claude/
+.opencode/
+
 # Temporary documentation and debug files
 debug_*.txt
 *说明.md

@@ -32,13 +32,13 @@ export default {
   height: 18px;
   border-radius: 50%;
   background: rgba(59, 130, 246, 0.2);
-  color: var(--cp-neon-blue, #3b82f6);
+  color: var(--cp-primary, #1E40AF);
   cursor: help;
   transition: all 0.3s ease;
 }
 
 .help-icon:hover {
-  background: rgba(59, 130, 246, 0.4);
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  background: rgba(30, 64, 175, 0.3);
+  box-shadow: 0 0 8px rgba(30, 64, 175, 0.3);
 }
 </style>

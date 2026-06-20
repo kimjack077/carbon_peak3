@@ -1,57 +1,70 @@
 <template>
   <div id="app">
-    <particle-background></particle-background>
-    <div class="ambient-bg" aria-hidden="true">
-      <span class="orb orb-a"></span>
-      <span class="orb orb-b"></span>
-      <span class="grid-pattern"></span>
-    </div>
-    <el-container class="app-shell">
-      <el-header class="app-header">
-        <div class="header-content">
-          <div class="logo">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
-            <div>
+    <div class="app-layout">
+      <!-- Header -->
+      <header class="app-header">
+        <div class="header-inner">
+          <div class="header-left">
+            <div class="logo-mark">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+              </svg>
+            </div>
+            <div class="logo-text">
               <h1>碳达峰预测系统</h1>
-              <p class="subtitle">多情景建模与路径对比分析</p>
+              <span class="logo-sub">Carbon Peak Prediction</span>
             </div>
           </div>
-          <div class="header-info">
-            <el-tag size="small" effect="dark">LEAP / Kaya / STIRPAT</el-tag>
+          <div class="header-right">
+            <div class="model-tags">
+              <span class="tag">LEAP</span>
+              <span class="tag">Kaya</span>
+              <span class="tag">STIRPAT</span>
+            </div>
             <theme-toggle></theme-toggle>
           </div>
         </div>
-      </el-header>
-      <el-main class="app-main">
-        <section class="tab-shell">
-          <el-tabs v-model="activeTab" type="card" class="app-tabs">
-          <el-tab-pane label="数据来源" name="upload">
-            <data-upload @data-loaded="handleDataLoaded"></data-upload>
-          </el-tab-pane>
-          <el-tab-pane label="情景设置" name="scenarios" :disabled="!dataLoaded">
-            <scenario-manager @prediction-completed="handlePredictionCompleted"></scenario-manager>
-          </el-tab-pane>
-          <el-tab-pane label="预测结果" name="results" :disabled="!dataLoaded">
-            <prediction-results
-              ref="predictionResults"
-              :key="resultsKey"
-              :is-active="activeTab === 'results'"
-            ></prediction-results>
-          </el-tab-pane>
-          <el-tab-pane label="情景对比" name="compare" :disabled="!dataLoaded">
-            <scenario-compare></scenario-compare>
-          </el-tab-pane>
-          </el-tabs>
-        </section>
-      </el-main>
-      <el-footer class="app-footer">
-        <p>Carbon Peak Prediction System - 基于 LEAP、Kaya、STIRPAT 模型</p>
-      </el-footer>
-    </el-container>
+      </header>
+
+      <!-- Main Content -->
+      <main class="app-main">
+        <div class="main-inner">
+          <div class="tab-container">
+            <div class="tab-bar">
+              <button
+                v-for="tab in tabs"
+                :key="tab.name"
+                :class="['tab-btn', { active: activeTab === tab.name, disabled: tab.disabled }]"
+                :disabled="tab.disabled"
+                @click.prevent="switchTab(tab.name)"
+                type="button"
+              >
+                <span class="tab-icon" v-html="tab.icon"></span>
+                <span class="tab-label">{{ tab.label }}</span>
+              </button>
+            </div>
+            <div class="tab-content">
+              <data-upload v-show="activeTab === 'upload'" @data-loaded="handleDataLoaded"></data-upload>
+              <scenario-manager v-show="activeTab === 'scenarios'"></scenario-manager>
+              <prediction-results
+                v-show="activeTab === 'results'"
+                ref="predictionResults"
+                :key="resultsKey"
+                :is-active="activeTab === 'results'"
+              ></prediction-results>
+              <scenario-compare v-show="activeTab === 'compare'" :is-active="activeTab === 'compare'"></scenario-compare>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="app-footer">
+        <span>Carbon Peak Prediction System · 基于 LEAP、Kaya、STIRPAT 模型</span>
+      </footer>
+    </div>
   </div>
 </template>
 
@@ -59,7 +72,6 @@
 import DataUpload from './components/DataUpload.vue'
 import ScenarioManager from './components/ScenarioManager.vue'
 import PredictionResults from './components/PredictionResults.vue'
-import ParticleBackground from './components/ParticleBackground.vue'
 import ScenarioCompare from './components/ScenarioCompare.vue'
 import ThemeToggle from './components/ThemeToggle.vue'
 import { themeStore } from './store/themeStore'
@@ -70,7 +82,6 @@ export default {
     DataUpload,
     ScenarioManager,
     PredictionResults,
-    ParticleBackground,
     ScenarioCompare,
     ThemeToggle
   },
@@ -81,10 +92,43 @@ export default {
       resultsKey: 0
     }
   },
+  computed: {
+    tabs() {
+      return [
+        {
+          name: 'upload',
+          label: '数据来源',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+          disabled: false
+        },
+        {
+          name: 'scenarios',
+          label: '情景设置',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+          disabled: !this.dataLoaded
+        },
+        {
+          name: 'results',
+          label: '预测结果',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+          disabled: !this.dataLoaded
+        },
+        {
+          name: 'compare',
+          label: '情景对比',
+          icon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>',
+          disabled: !this.dataLoaded
+        }
+      ]
+    }
+  },
   created() {
     themeStore.init()
   },
   methods: {
+    switchTab(name) {
+      this.activeTab = name
+    },
     handleDataLoaded(success) {
       this.dataLoaded = success
       if (success) {
@@ -104,309 +148,250 @@ export default {
 @import url('./assets/styles/theme-light.css');
 @import url('./assets/styles/theme-dark.css');
 @import url('./assets/styles/components-base.css');
-@import url('./assets/styles/animations.css');
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap');
 
+/* ===== Global Reset ===== */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-#app {
-  font-family: 'Manrope', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+html, body {
+  height: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: var(--cp-text-primary);
+}
+
+body {
   background: var(--cp-bg-primary);
-  min-height: 100vh;
-  position: relative;
-  overflow: hidden;
-  transition: background 400ms ease-out, color 300ms ease-out;
-}
-
-.ambient-bg {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.orb {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(2px);
-}
-
-.orb-a {
-  width: 420px;
-  height: 420px;
-  background: radial-gradient(circle at 30% 30%, rgba(15, 118, 110, 0.3), rgba(139, 92, 246, 0.15), transparent);
-  top: -120px;
-  left: -80px;
-  animation: float-slow 11s ease-in-out infinite;
-}
-
-.orb-b {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle at 65% 40%, rgba(59, 130, 246, 0.25), rgba(15, 118, 110, 0.15), transparent);
-  right: -150px;
-  bottom: -150px;
-  animation: float-slow 13s ease-in-out infinite reverse;
-}
-
-.grid-pattern {
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(rgba(15, 118, 110, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15, 118, 110, 0.08) 1px, transparent 1px);
-  background-size: 36px 36px;
-  mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.6), transparent 75%);
-}
-
-.app-shell {
-  min-height: 100vh;
-  position: relative;
-  z-index: 1;
-}
-
-.el-container {
-  min-height: 100vh;
-}
-
-.app-header {
   color: var(--cp-text-primary);
-  height: 78px !important;
-  padding: 0 var(--cp-spacing-lg);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+
+#app {
+  min-height: 100vh;
+  background: var(--cp-bg-primary);
+  color: var(--cp-text-primary);
+  transition: background-color var(--transition-slow), color var(--transition-slow);
+}
+
+/* ===== App Layout ===== */
+.app-layout {
   display: flex;
-  align-items: center;
-  border-bottom: 2px solid var(--cp-header-border);
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ===== Header ===== */
+.app-header {
+  height: 56px;
   background: var(--cp-bg-header);
-  box-shadow: var(--cp-shadow-sm);
-  transition: all var(--cp-transition-slow);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky, 200);
 }
 
-[data-theme="dark"] .app-header {
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--cp-border-primary);
-  box-shadow: var(--cp-shadow-glow);
-}
-
-.header-content {
-  width: 100%;
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--space-6, 24px);
+  height: 100%;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
 }
 
-.logo {
+.header-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-3, 12px);
 }
 
-.logo svg {
-  opacity: 0.92;
-}
-
-.logo h1 {
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: 0.4px;
-}
-
-.subtitle {
-  font-size: 12px;
-  opacity: 0.85;
-  margin-top: 4px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.header-info .el-tag {
-  min-height: 30px;
-  padding: 0 12px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.16);
-  color: #ffffff;
-  letter-spacing: 0.03em;
-  font-weight: 700;
-}
-
-.app-main {
-  padding: 26px;
-  min-height: calc(100vh - 126px);
-}
-
-.tab-shell {
-  background: var(--cp-glass-bg);
-  border: 1px solid var(--cp-glass-border);
-  box-shadow: var(--cp-shadow-glow);
-  border-radius: var(--cp-radius-lg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 14px 16px 18px;
-}
-
-.app-footer {
-  background: var(--cp-bg-footer);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  color: var(--cp-text-secondary);
-  height: 48px !important;
+.logo-mark {
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  letter-spacing: 0.02em;
-  border-top: 1px solid var(--cp-border-primary);
-  transition: all var(--cp-transition-slow);
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md, 10px);
+  color: white;
 }
 
-::v-deep .app-tabs > .el-tabs__header {
-  margin-bottom: 18px;
+.logo-text h1 {
+  font-size: var(--text-base, 15px);
+  font-weight: 600;
+  color: white;
+  line-height: 1.2;
+  font-family: var(--font-heading);
 }
 
-::v-deep .app-tabs > .el-tabs__header .el-tabs__nav-wrap::after {
-  background-color: rgba(255, 255, 255, 0.15);
+.logo-sub {
+  font-size: var(--text-xs, 11px);
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 400;
 }
 
-::v-deep .app-tabs > .el-tabs__header .el-tabs__item {
-  min-height: 44px;
-  line-height: 44px;
-  padding: 0 22px;
-  font-weight: 700;
-  color: var(--cp-text-muted);
-  transition: all 0.2s ease;
-  border-radius: 11px 11px 0 0;
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 16px);
 }
 
-::v-deep .app-tabs > .el-tabs__header .el-tabs__item:focus,
-::v-deep .app-tabs > .el-tabs__header .el-tabs__item:focus-visible {
-  outline: 2px solid rgba(15, 118, 110, 0.5);
-  outline-offset: -2px;
+.model-tags {
+  display: flex;
+  gap: var(--space-2, 8px);
 }
 
-::v-deep .app-tabs > .el-tabs__header .el-tabs__item.is-active {
-  color: var(--cp-primary-deep);
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 15px rgba(15, 118, 110, 0.3);
+.model-tags .tag {
+  font-size: var(--text-xs, 11px);
+  color: rgba(255, 255, 255, 0.75);
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm, 6px);
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
-::v-deep .app-tabs > .el-tabs__header .el-tabs__item:hover {
-  color: var(--cp-primary);
+/* ===== Main Content ===== */
+.app-main {
+  flex: 1;
+  padding: var(--space-6, 24px);
+  background: var(--cp-bg-primary);
 }
 
-::v-deep .el-card {
-  border: 1px solid var(--cp-glass-border);
-  box-shadow: var(--cp-shadow-sm);
-  border-radius: var(--cp-radius-md);
+.main-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ===== Tab Container ===== */
+.tab-container {
+  background: var(--cp-bg-card);
+  border-radius: var(--radius-lg, 16px);
+  border: 1px solid var(--cp-border-primary);
+  box-shadow: var(--cp-shadow-sm, 0 1px 2px rgba(0,0,0,0.05));
   overflow: hidden;
-  background: var(--cp-glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }
 
-::v-deep .el-card__header {
-  background: linear-gradient(135deg, rgba(15, 118, 110, 0.25), rgba(139, 92, 246, 0.15));
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 16px 20px;
+.tab-bar {
+  display: flex;
+  background: var(--cp-bg-secondary);
+  border-bottom: 1px solid var(--cp-border-primary);
+  padding: 0 var(--space-2, 8px);
 }
 
-::v-deep .el-card__body {
-  background: rgba(15, 23, 42, 0.6);
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  padding: 0 var(--space-5, 20px);
+  height: 46px;
+  border: none;
+  background: transparent;
+  color: var(--cp-text-secondary);
+  font-family: var(--font-body);
+  font-size: var(--text-sm, 13px);
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  outline: none;
 }
 
-::v-deep .el-button--primary {
-  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 0 10px rgba(15, 118, 110, 0.3);
+.tab-btn:hover:not(:disabled) {
+  color: var(--cp-primary);
+  background: var(--cp-bg-hover);
 }
 
-::v-deep .el-button--primary:hover {
-  background: linear-gradient(135deg, #0d6560 0%, #0f9f8f 100%);
-  box-shadow: 0 0 20px rgba(15, 118, 110, 0.5);
+.tab-btn.active {
+  color: var(--cp-primary);
+  font-weight: 600;
 }
 
-::v-deep .el-button--success {
-  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 10px rgba(15, 118, 110, 0.3);
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: var(--space-4, 16px);
+  right: var(--space-4, 16px);
+  height: 2px;
+  background: var(--cp-primary);
+  border-radius: 1px 1px 0 0;
 }
 
-::v-deep .el-button--success:hover {
-  background: linear-gradient(135deg, #0d6560 0%, #0d9f90 100%);
-  box-shadow: 0 0 20px rgba(15, 118, 110, 0.5);
+.tab-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
-::v-deep .el-button {
-  min-height: 40px;
+.tab-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
 }
 
-::v-deep .el-button:focus,
-::v-deep .el-button:focus-visible,
-::v-deep .el-input__inner:focus,
-::v-deep .el-textarea__inner:focus,
-::v-deep .el-select .el-input.is-focus .el-input__inner {
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.2);
+.tab-icon svg {
+  width: 16px;
+  height: 16px;
 }
 
-@keyframes float-slow {
-  0% {
-    transform: translateY(0) translateX(0);
-  }
-  50% {
-    transform: translateY(16px) translateX(8px);
-  }
-  100% {
-    transform: translateY(0) translateX(0);
-  }
+.tab-content {
+  padding: var(--space-6, 24px);
+  min-height: 60vh;
 }
 
-@media (max-width: 992px) {
-  .app-main {
-    padding: 16px;
-  }
+/* ===== Footer ===== */
+.app-footer {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cp-bg-footer);
+  border-top: 1px solid var(--cp-border-primary);
+  color: var(--cp-text-muted);
+  font-size: var(--text-xs, 11px);
+}
 
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
   .app-header {
-    height: auto !important;
-    padding: 14px 16px;
+    height: auto;
+    padding: var(--space-3, 12px) 0;
   }
 
-  .header-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  .header-inner {
+    padding: 0 var(--space-4, 16px);
+    flex-wrap: wrap;
+    gap: var(--space-2, 8px);
   }
 
-  .logo h1 {
-    font-size: 19px;
+  .model-tags {
+    display: none;
   }
 
-  .subtitle {
-    font-size: 11px;
-    letter-spacing: 0.08em;
+  .app-main {
+    padding: var(--space-4, 16px);
   }
 
-  ::v-deep .app-tabs > .el-tabs__header .el-tabs__item {
-    padding: 0 14px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .orb-a,
-  .orb-b {
-    animation: none;
+  .tab-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
-  * {
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+  .tab-btn {
+    padding: 0 var(--space-3, 12px);
+    font-size: var(--text-xs, 11px);
+  }
+
+  .tab-content {
+    padding: var(--space-4, 16px);
   }
 }
 </style>

@@ -14,22 +14,24 @@
     "gdp_growth_rate": 0.078,
     "efficiency_improvement_rate": 0.05
   },
+  "AI推荐": {
+    "model_type": "kaya",
+    "gdp_growth_rate": 0.045,
+    "efficiency_improvement_rate": 0.05,
+    "renewable_increase_rate": 0.01,
+    "coal_decrease_rate": 0.016
+  },
   "情景三": {
     "model_type": "leap",
-    "gdp_growth_rate": 0.068,
-    "efficiency_improvement_rate": 0.07
-  },
-  "测试情景": {
-    "model_type": "leap",
-    "gdp_growth_rate": 0.05,
-    "efficiency_improvement_rate": 0.08,
-    "renewable_increase_rate": 0.01,
+    "gdp_growth_rate": 0.0775,
+    "efficiency_improvement_rate": 0.1,
+    "renewable_increase_rate": 0.015,
     "coal_decrease_rate": 0.02
   },
-  "自动化测试情景": {
+  "情景四": {
     "model_type": "leap",
     "gdp_growth_rate": 0.05,
-    "efficiency_improvement_rate": 0.08,
+    "efficiency_improvement_rate": 0.03,
     "renewable_increase_rate": 0.01,
     "coal_decrease_rate": 0.02
   }

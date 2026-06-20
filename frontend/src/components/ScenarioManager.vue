@@ -291,17 +291,15 @@ export default {
 
 <style scoped>
 .scenario-manager {
-  margin-bottom: var(--cp-spacing-lg);
+  margin-bottom: 24px;
 }
 
 .recommend-section {
-  margin-bottom: var(--cp-spacing-lg);
+  margin-bottom: 16px;
 }
 
 .scenario-card, .scenario-list-card {
   height: 100%;
-  border-radius: var(--cp-radius-lg);
-  border: 1px solid var(--cp-border-primary);
 }
 
 .card-header {
@@ -311,92 +309,59 @@ export default {
 }
 
 .card-title {
-  font-size: var(--cp-font-md);
-  font-weight: 800;
-  color: var(--cp-text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cp-text-primary, #0F172A);
 }
 
 .el-divider {
   margin: 16px 0;
 }
 
-.el-divider__text {
-  color: #0f766e;
-  font-weight: 700;
-}
-
 .empty-scenarios {
   text-align: center;
-  padding: 42px 0;
-  color: var(--cp-text-muted);
+  padding: 40px 0;
+  color: var(--cp-text-muted, #94A3B8);
 }
 
 .empty-scenarios i {
   font-size: 48px;
-  margin-bottom: 16px;
-  color: var(--cp-text-muted);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.empty-scenarios p {
+  font-size: 13px;
+  margin: 0;
 }
 
 .run-prediction {
-  margin-top: 24px;
+  margin-top: 20px;
   padding-top: 16px;
-  border-top: 1px dashed rgba(15, 118, 110, 0.2);
+  border-top: 1px solid var(--cp-border-primary, #E2E8F0);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
 }
 
 .prediction-hint {
-  color: var(--cp-text-muted);
-  font-size: var(--cp-font-xs);
+  color: var(--cp-text-muted, #94A3B8);
+  font-size: 12px;
 }
 
 ::v-deep .el-slider__input {
   width: 80px;
 }
 
-::v-deep .el-table th {
-  background-color: rgba(20, 184, 166, 0.08);
-  color: #124e66;
-  font-weight: 700;
-}
-
-::v-deep .el-form-item__label {
-  color: #23423a;
-  font-weight: 700;
-}
-
-::v-deep .el-input__inner,
-::v-deep .el-textarea__inner {
-  border-radius: 10px;
-  border-color: rgba(15, 118, 110, 0.24);
-}
-
-::v-deep .el-input__inner:hover,
-::v-deep .el-textarea__inner:hover {
-  border-color: rgba(15, 118, 110, 0.48);
-}
-
-::v-deep .el-slider__runway {
-  height: 8px;
-  border-radius: 99px;
-  background: rgba(15, 118, 110, 0.16);
-}
-
-::v-deep .el-slider__bar {
-  background: linear-gradient(90deg, #0f766e, #14b8a6);
-}
-
-::v-deep .el-slider__button {
-  width: 18px;
-  height: 18px;
-  border: 2px solid #0f766e;
+::v-deep .el-card__header {
+  background: var(--cp-bg-card, #fff) !important;
+  border-bottom: 1px solid var(--cp-border-primary, #E2E8F0) !important;
 }
 
 @media (max-width: 992px) {
   .scenario-manager ::v-deep .el-col {
-    margin-bottom: 14px;
+    margin-bottom: 16px;
   }
 
   .run-prediction {
